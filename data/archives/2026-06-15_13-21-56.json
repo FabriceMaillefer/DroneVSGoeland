@@ -1,0 +1,140 @@
+{
+    "started_at": 1781522471,
+    "ended_at": 1781522516,
+    "winner": "B",
+    "team_names": {
+        "A": "DRONES",
+        "B": "GOÉLAND"
+    },
+    "sound_poste_id": 1,
+    "postes": [
+        {
+            "id": 1,
+            "name": "Poste 1",
+            "team": "B"
+        },
+        {
+            "id": 2,
+            "name": "Poste 2",
+            "team": "B"
+        },
+        {
+            "id": 3,
+            "name": "Poste 3",
+            "team": "B"
+        },
+        {
+            "id": 4,
+            "name": "Poste 4",
+            "team": "B"
+        },
+        {
+            "id": 5,
+            "name": "Poste 5",
+            "team": "B"
+        },
+        {
+            "id": 6,
+            "name": "Poste 6",
+            "team": "B"
+        }
+    ],
+    "events": [
+        {
+            "t": 2,
+            "poste_id": 2,
+            "from": "neutral",
+            "to": "A"
+        },
+        {
+            "t": 3,
+            "poste_id": 3,
+            "from": "neutral",
+            "to": "A"
+        },
+        {
+            "t": 3,
+            "poste_id": 3,
+            "from": "A",
+            "to": "B"
+        },
+        {
+            "t": 4,
+            "poste_id": 4,
+            "from": "neutral",
+            "to": "A"
+        },
+        {
+            "t": 4,
+            "poste_id": 4,
+            "from": "A",
+            "to": "B"
+        },
+        {
+            "t": 5,
+            "poste_id": 4,
+            "from": "B",
+            "to": "A"
+        },
+        {
+            "t": 5,
+            "poste_id": 4,
+            "from": "A",
+            "to": "B"
+        },
+        {
+            "t": 7,
+            "poste_id": 5,
+            "from": "neutral",
+            "to": "A"
+        },
+        {
+            "t": 15,
+            "poste_id": 1,
+            "from": "neutral",
+            "to": "A"
+        },
+        {
+            "t": 25,
+            "poste_id": 6,
+            "from": "neutral",
+            "to": "B"
+        },
+        {
+            "t": 28,
+            "poste_id": 5,
+            "from": "A",
+            "to": "B"
+        },
+        {
+            "t": 31,
+            "poste_id": 2,
+            "from": "A",
+            "to": "B"
+        },
+        {
+            "t": 35,
+            "poste_id": 1,
+            "from": "A",
+            "to": "B"
+        }
+    ],
+    "stats": {
+        "duration": 45,
+        "score": {
+            "A": 0,
+            "B": 6,
+            "neutral": 0
+        },
+        "total_captures": 13,
+        "captures": {
+            "A": 6,
+            "B": 7
+        },
+        "most_changed": {
+            "poste_id": 4,
+            "name": "Poste 4",
+            "changes": 4
+        }
+    }
+}

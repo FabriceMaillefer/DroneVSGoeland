@@ -1,0 +1,25 @@
+{
+    "app_title": "Albé 2026",
+    "victory_hold_seconds": 10,
+    "poll_dashboard_ms": 2000,
+    "poll_poste_ms": 3000,
+    "sound_poste_id": 3,
+    "team_names": {
+        "A": "DRONES",
+        "B": "GOÉLAND"
+    },
+    "postes": [
+        { "id": 1, "name": "Poste 1", "initial": "neutral" },
+        { "id": 2, "name": "Poste 2", "initial": "neutral" },
+        { "id": 3, "name": "Poste 3", "initial": "neutral" },
+        { "id": 4, "name": "Poste 4", "initial": "neutral" },
+        { "id": 5, "name": "Poste 5", "initial": "neutral" },
+        { "id": 6, "name": "Poste 6", "initial": "neutral" }
+    ],
+    "audio": {
+        "domination_a": "audio/domination_a.wav",
+        "domination_b": "audio/domination_b.wav",
+        "victory_a": "audio/victory_a.wav",
+        "victory_b": "audio/victory_b.wav"
+    }
+}

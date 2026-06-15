@@ -1,0 +1,248 @@
+{
+    "started_at": 1781536205,
+    "ended_at": 1781536403,
+    "winner": null,
+    "team_names": {
+        "A": "DRONES",
+        "B": "GOÉLAND"
+    },
+    "sound_poste_id": 3,
+    "postes": [
+        {
+            "id": 1,
+            "name": "Poste 1",
+            "team": "A"
+        },
+        {
+            "id": 2,
+            "name": "Poste 2",
+            "team": "A"
+        },
+        {
+            "id": 3,
+            "name": "Poste 3",
+            "team": "A"
+        },
+        {
+            "id": 4,
+            "name": "Poste 4",
+            "team": "neutral"
+        },
+        {
+            "id": 5,
+            "name": "Poste 5",
+            "team": "neutral"
+        },
+        {
+            "id": 6,
+            "name": "Poste 6",
+            "team": "neutral"
+        }
+    ],
+    "events": [
+        {
+            "t": 8,
+            "poste_id": 1,
+            "from": "neutral",
+            "to": "A"
+        },
+        {
+            "t": 8,
+            "poste_id": 1,
+            "from": "A",
+            "to": "B"
+        },
+        {
+            "t": 9,
+            "poste_id": 1,
+            "from": "B",
+            "to": "A"
+        },
+        {
+            "t": 10,
+            "poste_id": 1,
+            "from": "A",
+            "to": "B"
+        },
+        {
+            "t": 10,
+            "poste_id": 1,
+            "from": "B",
+            "to": "A"
+        },
+        {
+            "t": 11,
+            "poste_id": 1,
+            "from": "A",
+            "to": "B"
+        },
+        {
+            "t": 12,
+            "poste_id": 1,
+            "from": "B",
+            "to": "A"
+        },
+        {
+            "t": 13,
+            "poste_id": 1,
+            "from": "A",
+            "to": "B"
+        },
+        {
+            "t": 15,
+            "poste_id": 1,
+            "from": "B",
+            "to": "A"
+        },
+        {
+            "t": 16,
+            "poste_id": 1,
+            "from": "A",
+            "to": "B"
+        },
+        {
+            "t": 17,
+            "poste_id": 1,
+            "from": "B",
+            "to": "A"
+        },
+        {
+            "t": 17,
+            "poste_id": 1,
+            "from": "A",
+            "to": "B"
+        },
+        {
+            "t": 17,
+            "poste_id": 1,
+            "from": "B",
+            "to": "A"
+        },
+        {
+            "t": 17,
+            "poste_id": 1,
+            "from": "A",
+            "to": "B"
+        },
+        {
+            "t": 17,
+            "poste_id": 1,
+            "from": "B",
+            "to": "A"
+        },
+        {
+            "t": 18,
+            "poste_id": 1,
+            "from": "A",
+            "to": "B"
+        },
+        {
+            "t": 32,
+            "poste_id": 1,
+            "from": "B",
+            "to": "A"
+        },
+        {
+            "t": 39,
+            "poste_id": 3,
+            "from": "neutral",
+            "to": "A"
+        },
+        {
+            "t": 44,
+            "poste_id": 3,
+            "from": "A",
+            "to": "B"
+        },
+        {
+            "t": 51,
+            "poste_id": 3,
+            "from": "B",
+            "to": "A"
+        },
+        {
+            "t": 58,
+            "poste_id": 3,
+            "from": "A",
+            "to": "neutral"
+        },
+        {
+            "t": 61,
+            "poste_id": 3,
+            "from": "neutral",
+            "to": "A"
+        },
+        {
+            "t": 69,
+            "poste_id": 3,
+            "from": "A",
+            "to": "B"
+        },
+        {
+            "t": 87,
+            "poste_id": 3,
+            "from": "B",
+            "to": "A"
+        },
+        {
+            "t": 111,
+            "poste_id": 2,
+            "from": "neutral",
+            "to": "B"
+        },
+        {
+            "t": 111,
+            "poste_id": 2,
+            "from": "B",
+            "to": "A"
+        },
+        {
+            "t": 112,
+            "poste_id": 2,
+            "from": "A",
+            "to": "B"
+        },
+        {
+            "t": 112,
+            "poste_id": 2,
+            "from": "B",
+            "to": "A"
+        },
+        {
+            "t": 113,
+            "poste_id": 2,
+            "from": "A",
+            "to": "neutral"
+        },
+        {
+            "t": 113,
+            "poste_id": 2,
+            "from": "neutral",
+            "to": "B"
+        },
+        {
+            "t": 114,
+            "poste_id": 2,
+            "from": "B",
+            "to": "A"
+        }
+    ],
+    "stats": {
+        "duration": null,
+        "score": {
+            "A": 3,
+            "B": 0,
+            "neutral": 3
+        },
+        "total_captures": 31,
+        "captures": {
+            "A": 16,
+            "B": 13
+        },
+        "most_changed": {
+            "poste_id": 1,
+            "name": "Poste 1",
+            "changes": 17
+        }
+    }
+}

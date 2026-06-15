@@ -1,0 +1,22 @@
+# Compression des fichiers STATIQUES (HTML, JS, CSS, SVG) — réduit la bande passante mobile.
+# NB : on n'inclut PAS application/json ici. Les réponses d'API (api/state.php…) sont
+# compressées côté PHP via ob_gzhandler. Laisser mod_deflate les compresser en plus
+# provoquerait une double compression et, surtout, ferait suffixer l'ETag en "…-gzip"
+# par Apache, ce qui casserait la comparaison If-None-Match (le 304 ne fonctionnerait plus).
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/html text/plain text/css application/javascript image/svg+xml
+</IfModule>
+
+# Brotli si disponible (idem : pas de JSON, géré par PHP).
+<IfModule mod_brotli.c>
+    AddOutputFilterByType BROTLI_COMPRESS text/html text/plain text/css application/javascript image/svg+xml
+</IfModule>
+
+# Les fichiers statiques peuvent être mis en cache ; les réponses d'API gèrent leur propre cache (ETag).
+<IfModule mod_headers.c>
+    <FilesMatch "\.(js|css|wav|mp3|ogg)$">
+        Header set Cache-Control "max-age=3600"
+    </FilesMatch>
+</IfModule>
+
+DirectoryIndex index.php

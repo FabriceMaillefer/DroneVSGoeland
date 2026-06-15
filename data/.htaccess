@@ -1,0 +1,12 @@
+# Interdit l'accès web direct aux fichiers de données (état, config, archives).
+# Le jeu lit/écrit ces fichiers uniquement via les scripts PHP de /api.
+# (Apache 2.4+)
+<RequireAll>
+    Require all denied
+</RequireAll>
+
+# Repli pour Apache 2.2
+<IfModule !mod_authz_core.c>
+    Order deny,allow
+    Deny from all
+</IfModule>

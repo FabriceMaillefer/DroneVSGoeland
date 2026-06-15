@@ -1,0 +1,110 @@
+{
+    "started_at": 1781535894,
+    "ended_at": 1781535913,
+    "winner": "A",
+    "team_names": {
+        "A": "DRONES",
+        "B": "GOÉLAND"
+    },
+    "sound_poste_id": 3,
+    "postes": [
+        {
+            "id": 1,
+            "name": "Poste 1",
+            "team": "A"
+        },
+        {
+            "id": 2,
+            "name": "Poste 2",
+            "team": "A"
+        },
+        {
+            "id": 3,
+            "name": "Poste 3",
+            "team": "A"
+        },
+        {
+            "id": 4,
+            "name": "Poste 4",
+            "team": "A"
+        },
+        {
+            "id": 5,
+            "name": "Poste 5",
+            "team": "A"
+        },
+        {
+            "id": 6,
+            "name": "Poste 6",
+            "team": "A"
+        }
+    ],
+    "events": [
+        {
+            "t": 0,
+            "poste_id": 3,
+            "from": "neutral",
+            "to": "A"
+        },
+        {
+            "t": 1,
+            "poste_id": 4,
+            "from": "neutral",
+            "to": "A"
+        },
+        {
+            "t": 2,
+            "poste_id": 5,
+            "from": "neutral",
+            "to": "A"
+        },
+        {
+            "t": 2,
+            "poste_id": 6,
+            "from": "neutral",
+            "to": "A"
+        },
+        {
+            "t": 4,
+            "poste_id": 2,
+            "from": "neutral",
+            "to": "A"
+        },
+        {
+            "t": 6,
+            "poste_id": 1,
+            "from": "neutral",
+            "to": "A"
+        },
+        {
+            "t": 8,
+            "poste_id": 1,
+            "from": "A",
+            "to": "B"
+        },
+        {
+            "t": 9,
+            "poste_id": 1,
+            "from": "B",
+            "to": "A"
+        }
+    ],
+    "stats": {
+        "duration": 19,
+        "score": {
+            "A": 6,
+            "B": 0,
+            "neutral": 0
+        },
+        "total_captures": 8,
+        "captures": {
+            "A": 7,
+            "B": 1
+        },
+        "most_changed": {
+            "poste_id": 1,
+            "name": "Poste 1",
+            "changes": 3
+        }
+    }
+}
