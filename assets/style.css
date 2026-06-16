@@ -45,6 +45,7 @@
   /* Typo */
   --font-display: 'Chakra Petch', 'Segoe UI', system-ui, sans-serif;
   --font-body:    'Space Grotesk', 'Segoe UI', system-ui, sans-serif;
+  --font-mono:    ui-monospace, 'SFMono-Regular', 'JetBrains Mono', 'Cascadia Code', Consolas, monospace;
 
   /* Rayons */
   --r-sm: 9px;
@@ -124,6 +125,9 @@ a:hover { text-decoration: underline; }
 .btn svg { flex: none; }
 
 .btn--sm { height: 40px; font-size: 14px; padding: 0 14px; }
+/* Bouton icône carré (Config / Historique) : gagne de la place dans l'en-tête. */
+.btn--icon { padding: 0; width: 40px; }
+.btn--icon svg { width: 18px; height: 18px; }
 .btn--a    { background: var(--a); box-shadow: 0 0 24px rgba(47,123,255,.45); }
 .btn--b    { background: var(--b); box-shadow: 0 0 24px rgba(255,59,48,.45); }
 .btn--gold { background: var(--gold); color: #0a0f18; }
@@ -402,6 +406,35 @@ a:hover { text-decoration: underline; }
   padding: 10px 12px; min-height: 44px;
 }
 .field input:focus, .field select:focus { outline: 2px solid var(--a); }
+
+/* Éditeurs de patterns Strudel (textarea = mini éditeur de code) */
+.field textarea {
+  font-family: var(--font-mono); font-size: 13px; line-height: 1.5; color: var(--text);
+  background: var(--bg-3); border: 1px solid var(--line); border-radius: var(--r-md);
+  padding: 12px 14px; width: 100%; resize: vertical; tab-size: 2;
+  min-height: 120px; box-sizing: border-box;
+}
+.field textarea:focus { outline: 2px solid var(--a); }
+.field textarea::placeholder { color: var(--text-5); }
+
+/* Les patterns Domination/Victoire A & B vont 2 par ligne (A vs B) ; le reste
+   (neutre) prend toute la largeur de la colonne.
+   IMPORTANT : colonnes en minmax(0, 1fr) + min-width:0 sur les items → les
+   colonnes peuvent rétrécir. Sans ça, le min-content des éditeurs « gonfle » la
+   section au-delà de la colonne étroite (.wrap--narrow). */
+.pattern-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.pattern-grid > * { min-width: 0; }
+.pattern-grid .field--wide { grid-column: 1 / -1; }
+@media (max-width: 560px) { .pattern-grid { grid-template-columns: 1fr; } }
+/* Carte par éditeur, avec un liseré coloré selon l'équipe concernée. */
+.pattern-card {
+  border: 1px solid var(--line-2); border-left: 3px solid var(--line);
+  border-radius: var(--r-md); background: var(--bg-2); padding: 12px;
+}
+.pattern-card.pat--a { border-left-color: var(--a); }
+.pattern-card.pat--b { border-left-color: var(--b); }
+.pattern-card.pat--neutral { border-left-color: var(--neutral); }
+.pattern-card .field { gap: 8px; }
 .poste-config-row {
   display: grid; grid-template-columns: 1fr 1.4fr auto; gap: 12px; align-items: end;
   padding: 12px; border: 1px solid rgba(255,255,255,.07); border-radius: var(--r-md); background: var(--bg-2);
@@ -416,6 +449,23 @@ a:hover { text-decoration: underline; }
 .radio-group input:checked + label.r-a { background: var(--a); color: #fff; border-color: var(--a); }
 .radio-group input:checked + label.r-b { background: var(--b); color: #fff; border-color: var(--b); }
 .radio-group input:checked + label.r-n { background: var(--neutral); color: #fff; border-color: var(--neutral); }
+
+/* ---------------------------------------------------------------- */
+/* Soundboard (page demo.php) — écoute locale des patterns            */
+/* ---------------------------------------------------------------- */
+.soundboard-note { font-size: 13px; margin: 0 0 16px; }
+.soundboard { display: grid; gap: 18px; margin: 4px 0 18px; }
+.sb-group { display: grid; gap: 8px; }
+.sb-label {
+  font-family: var(--font-display); font-size: 12px; letter-spacing: .12em;
+  text-transform: uppercase; color: var(--text-3);
+}
+/* min-width:0 → les colonnes peuvent rétrécir (pas de débordement sur mobile). */
+.sb-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(0, 1fr)); gap: 10px; }
+.sb-btn { width: 100%; }
+.sb-btn.is-playing { outline: 2px solid #fff; outline-offset: 2px; }
+.sb-stop { width: 100%; margin-top: 4px; }
+.sb-status { font-size: 13px; margin-top: 10px; text-align: center; }
 
 /* ---------------------------------------------------------------- */
 /* Historique                                                        */
@@ -434,6 +484,10 @@ a:hover { text-decoration: underline; }
 .hist-date { font-family: var(--font-display); font-weight: 600; font-size: 16px; }
 .hist-sub { color: var(--text-4); font-size: 13px; }
 .hist-score { font-family: var(--font-display); font-weight: 700; font-size: 22px; font-variant-numeric: tabular-nums; }
+/* Bouton supprimer une archive : discret, devient rouge au survol. */
+.hist-del { padding: 0; width: 44px; font-size: 18px; line-height: 1; }
+.hist-del:hover:not(:disabled) { color: var(--b); border-color: var(--b-line); }
+.hist-del:disabled { opacity: .5; cursor: default; }
 
 /* ---------------------------------------------------------------- */
 /* Rejeu                                                             */
@@ -565,11 +619,21 @@ a.tile:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
   .charts { grid-template-columns: 1fr; }
   .tiles { grid-template-columns: repeat(3, 1fr); }
 }
+/* En-tête : passe en COLONNE CENTRÉE dès que la barre sur une seule ligne ne tient
+   plus (titre + score + contrôles ≈ 1080px de large). En flex-wrap, le score centré
+   par margin:auto se retrouvait décalé. Au-delà de 1100px : barre compacte sur une
+   ligne (écran de projection / grand desktop). */
+@media (max-width: 1100px) {
+  .dash-head { flex-direction: column; align-items: center; text-align: center; gap: 10px; }
+  .dash-brand { white-space: normal; }
+  .score { margin: 0; justify-content: center; }
+  .dash-meta { justify-content: center; }
+}
 @media (max-width: 620px) {
   .wrap { padding: 18px 14px 64px; }
   .tiles { grid-template-columns: repeat(2, 1fr); gap: 10px; }
   .score__num { font-size: 30px; }
   .victory__title { font-size: 38px; }
-  .dash-head { gap: 12px; padding: 14px 16px; }
+  .dash-head { padding: 14px 16px; }
   .poste-config-row { grid-template-columns: 1fr; }
 }

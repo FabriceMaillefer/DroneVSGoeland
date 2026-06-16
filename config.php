@@ -66,7 +66,7 @@ cdp_head($config['app_title'] . ' — Configuration');
 
     <div class="field">
       <label for="audio_samples">Samples — une ligne <code>nom: fichier.wav</code> (variantes : <code>nom: a.wav, b.wav</code>)</label>
-      <textarea id="audio_samples" rows="6" spellcheck="false" style="font-family:var(--font-mono,monospace);font-size:13px;width:100%;resize:vertical"></textarea>
+      <textarea id="audio_samples" rows="6" spellcheck="false"></textarea>
       <span class="hint">Déposez les fichiers (.wav/.mp3/.ogg) dans le dossier ci-dessus, puis donnez-leur un nom logique utilisable dans les patterns via <code>s("nom")</code>.</span>
     </div>
 
@@ -74,28 +74,43 @@ cdp_head($config['app_title'] . ' — Configuration');
       Patterns <a href="https://strudel.cc/learn/" target="_blank" rel="noopener">Strudel</a> joués selon l'état du « poste sonore » (et à la victoire). Laisser vide = silence.
       Utilisez <strong>▶ Tester</strong> pour écouter le pattern courant (édité, non enregistré) ; <strong>⏹ Stop</strong> coupe le son.
       <span class="muted" id="test-status"></span>
+    </p>
+
+    <div class="pattern-grid">
+      <div class="pattern-card pat--a"><div class="field">
+        <div class="pattern-head"><label for="pat_da">Domination équipe A</label>
+          <button type="button" class="btn btn--ghost btn--sm test-play" data-target="pat_da">▶ Tester</button></div>
+        <textarea id="pat_da" rows="10" spellcheck="false"></textarea></div></div>
+      <div class="pattern-card pat--b"><div class="field">
+        <div class="pattern-head"><label for="pat_db">Domination équipe B</label>
+          <button type="button" class="btn btn--ghost btn--sm test-play" data-target="pat_db">▶ Tester</button></div>
+        <textarea id="pat_db" rows="10" spellcheck="false"></textarea></div></div>
+      <div class="pattern-card pat--a"><div class="field">
+        <div class="pattern-head"><label for="pat_va">Victoire équipe A</label>
+          <button type="button" class="btn btn--ghost btn--sm test-play" data-target="pat_va">▶ Tester</button></div>
+        <textarea id="pat_va" rows="10" spellcheck="false"></textarea></div></div>
+      <div class="pattern-card pat--b"><div class="field">
+        <div class="pattern-head"><label for="pat_vb">Victoire équipe B</label>
+          <button type="button" class="btn btn--ghost btn--sm test-play" data-target="pat_vb">▶ Tester</button></div>
+        <textarea id="pat_vb" rows="10" spellcheck="false"></textarea></div></div>
+      <div class="pattern-card pat--neutral field--wide"><div class="field">
+        <div class="pattern-head"><label for="pat_neutral">Neutre (aucune équipe dominante)</label>
+          <button type="button" class="btn btn--ghost btn--sm test-play" data-target="pat_neutral">▶ Tester</button></div>
+        <textarea id="pat_neutral" rows="6" spellcheck="false" placeholder="vide = silence"></textarea></div></div>
     </div>
 
-    <div class="field">
-      <div class="pattern-head"><label for="pat_da">Domination équipe A</label>
-        <button type="button" class="btn btn--ghost btn--sm test-play" data-target="pat_da">▶ Tester</button></div>
-      <textarea id="pat_da" rows="14" spellcheck="false" style="font-family:var(--font-mono,monospace);font-size:13px;width:100%;resize:vertical;line-height:1.45"></textarea></div>
-    <div class="field">
-      <div class="pattern-head"><label for="pat_db">Domination équipe B</label>
-        <button type="button" class="btn btn--ghost btn--sm test-play" data-target="pat_db">▶ Tester</button></div>
-      <textarea id="pat_db" rows="14" spellcheck="false" style="font-family:var(--font-mono,monospace);font-size:13px;width:100%;resize:vertical;line-height:1.45"></textarea></div>
-    <div class="field">
-      <div class="pattern-head"><label for="pat_va">Victoire équipe A</label>
-        <button type="button" class="btn btn--ghost btn--sm test-play" data-target="pat_va">▶ Tester</button></div>
-      <textarea id="pat_va" rows="14" spellcheck="false" style="font-family:var(--font-mono,monospace);font-size:13px;width:100%;resize:vertical;line-height:1.45"></textarea></div>
-    <div class="field">
-      <div class="pattern-head"><label for="pat_vb">Victoire équipe B</label>
-        <button type="button" class="btn btn--ghost btn--sm test-play" data-target="pat_vb">▶ Tester</button></div>
-      <textarea id="pat_vb" rows="14" spellcheck="false" style="font-family:var(--font-mono,monospace);font-size:13px;width:100%;resize:vertical;line-height:1.45"></textarea></div>
-    <div class="field">
-      <div class="pattern-head"><label for="pat_neutral">Neutre (aucune équipe dominante)</label>
-        <button type="button" class="btn btn--ghost btn--sm test-play" data-target="pat_neutral">▶ Tester</button></div>
-      <textarea id="pat_neutral" rows="6" spellcheck="false" style="font-family:var(--font-mono,monospace);font-size:13px;width:100%;resize:vertical;line-height:1.45" placeholder="vide = silence"></textarea></div>
+    <div class="section-head" style="margin-top:10px"><span style="color:var(--a);font-family:var(--font-display);font-weight:700">04</span><h2>Transitions</h2>
+      <span class="hint">jouées une fois quand le poste sonore passe à A / B, puis l'ambiance reprend</span></div>
+    <div class="pattern-grid">
+      <div class="pattern-card pat--a"><div class="field">
+        <div class="pattern-head"><label for="pat_ta">Capture par équipe A</label>
+          <button type="button" class="btn btn--ghost btn--sm test-play" data-target="pat_ta">▶ Tester</button></div>
+        <textarea id="pat_ta" rows="6" spellcheck="false" placeholder="vide = pas de transition"></textarea></div></div>
+      <div class="pattern-card pat--b"><div class="field">
+        <div class="pattern-head"><label for="pat_tb">Capture par équipe B</label>
+          <button type="button" class="btn btn--ghost btn--sm test-play" data-target="pat_tb">▶ Tester</button></div>
+        <textarea id="pat_tb" rows="6" spellcheck="false" placeholder="vide = pas de transition"></textarea></div></div>
+    </div>
 
     <div style="margin-top:6px">
       <button type="button" id="test-stop" class="btn btn--ghost btn--sm">⏹ Stop</button>

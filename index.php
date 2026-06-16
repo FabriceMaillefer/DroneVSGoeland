@@ -16,6 +16,8 @@ cdp_head($config['app_title'] . ' — Tableau de bord');
 $appH  = htmlspecialchars($config['app_title']);
 $nameA = htmlspecialchars($config['team_names']['A']);
 $nameB = htmlspecialchars($config['team_names']['B']);
+// « En attente » = partie non démarrée et non terminée (phase de préparation).
+$waiting = empty($state['game_started']) && empty($state['game_over']);
 ?>
 <body>
 <script>
@@ -44,10 +46,15 @@ $nameB = htmlspecialchars($config['team_names']['B']);
       <div class="dash-meta">
         <span class="clock" id="clock">⏱ 00:00</span>
         <button class="btn btn--a btn--sm" id="btn-start">▶ Démarrer la partie</button>
+        <a class="btn btn--ghost btn--sm<?= $waiting ? '' : ' hidden' ?>" id="link-demo" href="demo.php">🔊 Sons</a>
         <button class="btn btn--sm sound-cta" id="btn-sound">🔊 Activer le son</button>
         <span class="nav-sep"></span>
-        <a class="btn btn--ghost btn--sm" href="config.php">Config</a>
-        <a class="btn btn--ghost btn--sm" href="history.php">Historique</a>
+        <a class="btn btn--ghost btn--sm btn--icon" href="config.php" title="Configuration" aria-label="Configuration">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        </a>
+        <a class="btn btn--ghost btn--sm btn--icon" href="history.php" title="Historique" aria-label="Historique">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3v5h5"/><path d="M3.05 13A9 9 0 1 0 6 5.3L3 8"/><path d="M12 7v5l3 2"/></svg>
+        </a>
       </div>
     </div>
 
@@ -119,11 +126,6 @@ $nameB = htmlspecialchars($config['team_names']['B']);
       </div>
     </div>
   </div>
-
-  <p class="muted" style="margin-top:18px;font-size:13px">
-    Astuce : ouvre une page de poste sur un mobile via le bouton ⤢ de chaque tuile, ou
-    <a href="poste.php?id=1">poste.php?id=1</a> … <a href="poste.php?id=6">id=6</a>.
-  </p>
 </div>
 
 <script src="<?= htmlspecialchars(cdp_asset('assets/core.js'), ENT_QUOTES) ?>"></script>

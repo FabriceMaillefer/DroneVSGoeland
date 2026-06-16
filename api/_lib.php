@@ -90,9 +90,13 @@ function cdp_default_config(): array
             'patterns' => [
                 'domination_a' => CDP_PATTERN_AIRCRAFT,
                 'domination_b' => CDP_PATTERN_SEAGULL,
-                'victory_a'    => CDP_PATTERN_AIRCRAFT,
-                'victory_b'    => CDP_PATTERN_SEAGULL,
+                'victory_a'    => CDP_PATTERN_VICTORY_A,
+                'victory_b'    => CDP_PATTERN_VICTORY_B,
                 'neutral'      => '',
+                // Joués UNE fois quand le poste sonore passe à l'équipe A / B
+                // (transition), avant la reprise de l'ambiance. Vide = pas de sting.
+                'transition_a' => CDP_PATTERN_TRANSITION_A,
+                'transition_b' => CDP_PATTERN_TRANSITION_B,
             ],
         ],
     ];
@@ -101,20 +105,22 @@ function cdp_default_config(): array
 // Patterns Strudel par défaut (adaptés hors-ligne : oscillateurs + vos samples).
 // Nowdoc => contenu littéral, aucun échappement requis.
 const CDP_PATTERN_AIRCRAFT = <<<'STRUDEL'
-// Hangar / Aircraft — ambiance grave et tendue (adapté hors-ligne)
+// Hangar / Aircraft — ambiance grave et tendue + rythme TR909
+// >>> AJUSTER EN LIVE : les .gain (volume de chaque couche), .slow(2) sur la batterie
+//     (3 = plus lent, 1 = 2x plus rapide), et .cpm(60) en bas = tempo global.
 stack(
   // Sample Aircraft : ralenti en nappe de fond, grondement irrégulier
   s("aircraft ~ aircraft ~")
-    .degradeBy(0.35)
+    .degradeBy(0.35)             // densité : ↑ = aircraft plus rare
     .speed(rand.range(0.45, 0.65))
     .pan(rand)
-    .gain(rand.range(0.6, 1))
+    .gain(rand.range(0.6, 1))    // volume nappe aircraft
     .room(0.5),
   // Drone sub : fondation grave, dissonance mineure (D + Eb)
   note("<d1 d1 eb1 d1>").s("sawtooth")
     .lpf(sine.range(120, 400).slow(16)).lpq(8)
     .attack(1).release(2)
-    .gain(0.55),
+    .gain(0.55),                 // volume du sub grave
   // Pulsation grave et rythmée (coeur du morceau)
   note("<d2 ~ d2 eb2 ~ d2 ~ ~>")
     .struct("x ~ x x ~ x ~ ~")
@@ -129,20 +135,32 @@ stack(
   s("~ ~ white ~")
     .attack(0.001).release(0.09).hpf(3000)
     .degradeBy(0.5)
-    .gain(0.5).pan(rand).room(0.7)
+    .gain(0.5).pan(rand).room(0.7),
+  // RYTHME TR909 — kick four-on-the-floor (pouls martial).
+  //   gain ↓ si trop présent · shape = saturation · .slow(2) = tempo (≈120 BPM ici)
+  s("bd*4").bank("RolandTR909").slow(2).gain(0.7).shape(0.2),
+  // RYTHME TR909 — balayage des 8 charlestons (texture qui avance).
+  //   gain ↓ pour adoucir · hpf ↑ = plus brillant/léger
+  s("hh:0 hh:1 hh:2 hh:3 hh:4 hh:5 hh:6 hh:7").bank("RolandTR909").slow(2)
+    .gain(0.32).hpf(6000).pan(sine.range(0.4, 0.6)),
+  // RYTHME TR909 — caisse claire sur les temps 2 & 4 (groove).
+  //   supprime cette ligne pour un beat plus nu
+  s("~ sd ~ sd").bank("RolandTR909").slow(2).gain(0.5).room(0.25)
 ).room(0.35).cpm(60)
 STRUDEL;
 
 const CDP_PATTERN_SEAGULL = <<<'STRUDEL'
-// Bord de mer — 8 mesures (adapté hors-ligne)
+// Bord de mer — ambiance + groove TR808
+// >>> AJUSTER EN LIVE : les .gain (volume de chaque couche), .slow(2) sur la batterie
+//     (tempo), et .cpm(55) en bas = tempo global.
 stack(
-  // Nappe d'accords (section A puis B)
+  // Nappe d'accords (progression sur 8 mesures)
   note("<[d3,f#3,a3] [a2,e3,a3] [b2,f#3,b3] [g2,d3,g3] [d3,f#3,a3] [g2,b2,d3] [a2,c#3,e3] [a2,e3,a3]>")
     .s("sawtooth")
     .attack(0.6).release(1.4)
     .lpf(sine.range(1200, 2400).slow(8))
     .gain(0.5).room(0.85),
-  // Basse rythmée (gm_synth_bass_1 -> sawtooth)
+  // Basse rythmée
   note("<d2 a1 b1 g1 d2 g1 a1 a1>")
     .struct("x ~ ~ x ~ x ~ ~")
     .s("sawtooth")
@@ -152,14 +170,14 @@ stack(
   // Sub sinus (profondeur)
   note("<d1 a0 b0 g0 d1 g0 a0 a0>").s("sine")
     .attack(0.02).release(0.5).gain(0.5),
-  // Guitare arpégée (gm_acoustic_guitar_nylon -> triangle plucké)
+  // Guitare arpégée (triangle plucké)
   note("<d4 f#4 a4 f#4 a4 d5 a4 f#4>*2")
     .s("triangle")
     .attack(0.005).release(0.3)
     .sometimesBy(0.3, x => x.add(note(12)))
     .gain(0.5).room(0.5)
     .delay(0.3).delaytime(0.375).delayfeedback(0.35),
-  // Mélodie sifflée (gm_whistle -> sine)
+  // Mélodie sifflée (sine)
   note("<[a4 ~ b4 a4] [a4 ~ f#4 ~] [b4 ~ a4 f#4] [d4 ~ e4 f#4] [f#4 ~ e4 d4] [b4 ~ d5 b4] [a4 ~ c#5 ~] [a4 ~ ~ ~]>")
     .s("sine")
     .attack(0.02).release(0.25)
@@ -168,11 +186,103 @@ stack(
   s("~ ~ seagull ~")
     .degradeBy(0.4)
     .gain(1).pan(rand).room(0.9).speed(rand.range(0.9, 1.1)),
-  // Ressac / hats (RolandTR808 -> bruit blanc court filtré)
-  s("~ white ~ white")
-    .attack(0.001).release(0.05).hpf(6000)
-    .gain(0.13).room(0.6)
+  // RYTHME TR808 — kick syncopé (groove relâché, plus doux que l'équipe A).
+  //   gain ↓ si trop présent · .slow(2) = tempo
+  s("bd ~ ~ bd ~ ~ bd ~").bank("RolandTR808").slow(2).gain(0.7),
+  // RYTHME TR808 — charlestons légers (remplacent l'ancien « ressac » en bruit blanc).
+  //   gain ↓ pour adoucir · hpf ↑ = plus aérien
+  s("hh:0 hh:1 hh:2 hh:3 hh:4 hh:5 hh:6 hh:7").bank("RolandTR808").slow(2)
+    .gain(0.26).hpf(7000).pan(sine.range(0.35, 0.65)),
+  // RYTHME TR808 — clap aérien sur les temps 2 & 4.
+  //   supprime cette ligne pour un groove plus minimal
+  s("~ cp ~ cp").bank("RolandTR808").slow(2).gain(0.4).room(0.4)
 ).room(0.5).cpm(55)
+STRUDEL;
+
+// Stings de transition : joués UNE fois quand le poste sonore passe à A / B.
+// .cpm(30) => 1 cycle = 2 s = la fenêtre TRANSITION_HOLD_MS de assets/audio.js,
+// donc le motif (1 cycle) joue exactement une fois avant la reprise de l'ambiance.
+const CDP_PATTERN_TRANSITION_A = <<<'STRUDEL'
+// Capture DRONES — verrouillage ascendant (joué une fois, ~2 s)
+stack(
+  // Souffle du sample aircraft, accéléré (impact d'arrivée)
+  s("aircraft").speed(1.6).hpf(300).gain(0.85).room(0.4),
+  // Arpège ascendant « lock-on » (sawtooth qui s'ouvre)
+  note("d3 a3 d4 f#4 a4 d5").s("sawtooth")
+    .attack(0.005).release(0.16)
+    .lpf(sine.range(700, 5000).fast(2)).lpq(6)
+    .gain(0.5),
+  // Coups graves d'appui (kick TR909)
+  s("bd ~ ~ bd").bank("RolandTR909").gain(0.9)
+).room(0.3).cpm(30)
+STRUDEL;
+
+const CDP_PATTERN_TRANSITION_B = <<<'STRUDEL'
+// Capture GOÉLAND — cri descendant / alerte (joué une fois, ~2 s)
+stack(
+  // Cri de goéland (votre sample), légèrement aigu
+  s("seagull").speed(1.15).gain(1).room(0.5),
+  // Motif descendant « bascule » (square, façon courte sirène)
+  note("a4 f#4 d4 a3 f#3 d3").s("square")
+    .attack(0.005).release(0.16)
+    .lpf(2400).lpq(8)
+    .gain(0.42),
+  // Frappes sèches d'appui (clap TR808)
+  s("~ cp ~ cp").bank("RolandTR808").gain(0.6)
+).room(0.35).cpm(30)
+STRUDEL;
+
+// Bandes de VICTOIRE : un éclat marquant au début, puis une plage calme et espacée.
+// arrange([n, motif], ...) joue chaque bloc pendant n cycles puis boucle sur le total.
+// >>> Pour espacer davantage le retour de l'éclat : augmente le 2e nombre (le « 5 »).
+const CDP_PATTERN_VICTORY_A = <<<'STRUDEL'
+// Victoire DRONES — éclat d'ouverture (ré majeur) puis plané paisible (aircraft espacé)
+arrange(
+  [1,
+    // ÉCLAT : accord majeur large + souffle aircraft + boom unique. gain = puissance.
+    stack(
+      note("[d3,f#3,a3,d4,f#4]").s("sawtooth")
+        .attack(0.01).release(3).lpf(3500).lpq(4).gain(0.6).room(0.7),
+      s("aircraft").speed(0.85).gain(0.9).hpf(120).room(0.8),
+      s("bd").bank("RolandTR909").gain(0.95).shape(0.2)
+    )
+  ],
+  [5,
+    // PLAGE CALME : nappe aiguë lente + sub doux + aircraft très espacé/lointain.
+    stack(
+      note("<d5 ~ ~ a4 ~ ~ f#4 ~>").s("triangle")
+        .attack(0.8).release(2.5).gain(0.3).room(0.92)
+        .delay(0.4).delaytime(0.5).delayfeedback(0.45),
+      note("<d2 ~ ~ ~ a1 ~ ~ ~>").s("sine").attack(1.2).release(4).gain(0.4),
+      s("~ ~ ~ ~ ~ ~ aircraft ~").speed(0.6).degradeBy(0.4).gain(0.35).pan(rand).room(0.95)
+    )
+  ]
+).room(0.5).cpm(32)
+STRUDEL;
+
+const CDP_PATTERN_VICTORY_B = <<<'STRUDEL'
+// Victoire GOÉLAND — éclat lumineux puis horizon paisible (seagull espacé)
+arrange(
+  [1,
+    // ÉCLAT : accord majeur brillant + cri de goéland + clap unique. gain = puissance.
+    stack(
+      note("[d3,f#3,a3,d4,a4]").s("sawtooth")
+        .attack(0.02).release(3).lpf(3000).lpq(4).gain(0.55).room(0.85),
+      s("seagull").speed(1).gain(1).room(0.85),
+      s("cp").bank("RolandTR808").gain(0.55).room(0.5)
+    )
+  ],
+  [5,
+    // PLAGE CALME : mélodie sifflée lente + sub très doux + goélands épars.
+    stack(
+      note("<a4 ~ ~ ~ f#4 ~ ~ d4>").s("sine")
+        .attack(0.6).release(3).gain(0.32).room(0.95)
+        .delay(0.35).delaytime(0.5).delayfeedback(0.45),
+      note("<d2 ~ ~ ~ ~ ~ ~ ~>").s("sine").attack(1.5).release(4).gain(0.35),
+      s("~ ~ ~ ~ seagull ~ ~ ~").degradeBy(0.5).gain(0.6).pan(rand).room(0.95).speed(rand.range(0.9, 1.1))
+    )
+  ]
+).room(0.5).cpm(30)
 STRUDEL;
 
 /** Nettoie un chemin de sample : relatif, sans traversée de répertoire, longueur bornée. */
@@ -292,11 +402,13 @@ function cdp_sanitize_config(array $in): array
     }
     $out['audio']['samples'] = $samples ?: $def['audio']['samples'];
 
-    // patterns : code Strudel par état (5 clés fixes), borné en longueur.
+    // patterns : code Strudel par état (clés fixes), borné en longueur.
     $out['audio']['patterns'] = $def['audio']['patterns'];
-    foreach (['domination_a', 'domination_b', 'victory_a', 'victory_b', 'neutral'] as $k) {
+    foreach (['domination_a', 'domination_b', 'victory_a', 'victory_b', 'neutral', 'transition_a', 'transition_b'] as $k) {
         if (isset($in['audio']['patterns'][$k]) && is_string($in['audio']['patterns'][$k])) {
-            $out['audio']['patterns'][$k] = mb_substr(trim($in['audio']['patterns'][$k]), 0, 2000);
+            // 8000 car. : large marge pour des patterns riches + commentaires (les
+            // défauts commentés font ~2 ko). Anti-abus sans tronquer du code légitime.
+            $out['audio']['patterns'][$k] = mb_substr(trim($in['audio']['patterns'][$k]), 0, 8000);
         }
     }
 

@@ -26,6 +26,7 @@
   var elChart = $('chart');
   var btnStart = $('btn-start');
   var btnSound = $('btn-sound');
+  var linkDemo = $('link-demo');
 
   // Noms d'équipes dans l'UI statique
   $('name-a').textContent = C.teamName('A');
@@ -93,6 +94,12 @@
     } else {
       btnStart.textContent = '▶ Démarrer la partie';
       btnStart.className = 'btn btn--a btn--sm';
+    }
+
+    // Lien « Sons » (démo) : visible seulement en attente du début (préparation).
+    if (linkDemo) {
+      var waiting = !state.game_started && !state.game_over;
+      linkDemo.classList.toggle('hidden', !waiting);
     }
 
     // Score, terrain, tuiles, stats, graphe

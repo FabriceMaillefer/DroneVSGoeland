@@ -28,23 +28,62 @@
     var winnerName = a.winner ? (names[a.winner] || a.winner) : 'Aucun vainqueur';
     var most = stats.most_changed && stats.most_changed.name
       ? stats.most_changed.name + ' (' + stats.most_changed.changes + ')' : '—';
-    return '<div class="hist-item">' +
+    var file = encodeURIComponent(a.file);
+    return '<div class="hist-item" data-file="' + R.esc(a.file) + '">' +
       winnerCell(a.winner, names) +
       '<div class="hist-meta">' +
         '<span class="hist-date">' + C.fmtClock(a.ended_at) + '</span>' +
         '<span class="hist-sub">Durée ' + dur + ' · Vainqueur : ' + R.esc(winnerName) +
           ' · Poste le plus disputé : ' + R.esc(most) + '</span>' +
       '</div>' +
-      '<div style="display:flex;align-items:center;gap:16px">' +
+      '<div style="display:flex;align-items:center;gap:12px">' +
         '<span class="hist-score">' + score.A + ' — ' + score.B + '</span>' +
-        '<a class="btn btn--ghost btn--sm" href="replay.php?archive=' + encodeURIComponent(a.file) + '">Rejouer</a>' +
+        '<a class="btn btn--ghost btn--sm" href="replay.php?archive=' + file + '">Rejouer</a>' +
+        '<button type="button" class="btn btn--ghost btn--sm hist-del" data-del="' + R.esc(a.file) +
+          '" title="Supprimer cette partie" aria-label="Supprimer cette partie">🗑</button>' +
       '</div>' +
     '</div>';
   }
 
+  // Liste en mémoire : on re-rend après suppression pour gérer l'état "vide".
+  var archives = [];
+
+  function render() {
+    if (!archives.length) {
+      list.innerHTML = '';
+      empty.classList.remove('hidden');
+      return;
+    }
+    empty.classList.add('hidden');
+    list.innerHTML = archives.map(item).join('');
+  }
+
+  // Suppression d'une archive (confirmation + appel API), par délégation.
+  list.addEventListener('click', function (e) {
+    var btn = e.target.closest('.hist-del');
+    if (!btn) return;
+    var file = btn.getAttribute('data-del');
+    if (!file) return;
+    if (!window.confirm('Supprimer définitivement cette partie archivée ? Cette action est irréversible.')) return;
+
+    btn.disabled = true;
+    C.post('archive_delete.php', { file: file }).then(function (res) {
+      if (res.status === 200 && res.data && res.data.ok) {
+        archives = archives.filter(function (a) { return a.file !== file; });
+        render();
+        C.toast('Partie supprimée.');
+      } else {
+        btn.disabled = false;
+        C.toast((res.data && res.data.error) || 'Suppression impossible.', true);
+      }
+    }).catch(function () {
+      btn.disabled = false;
+      C.toast('Suppression impossible (réseau).', true);
+    });
+  });
+
   C.getJSON('archives.php').then(function (res) {
-    var arr = (res && res.archives) || [];
-    if (!arr.length) { empty.classList.remove('hidden'); return; }
-    list.innerHTML = arr.map(item).join('');
+    archives = (res && res.archives) || [];
+    render();
   }).catch(function () { empty.classList.remove('hidden'); });
 })();

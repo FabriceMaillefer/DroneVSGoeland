@@ -15,7 +15,7 @@ cdp_head($config['app_title'] . ' — Historique');
 </script>
 
 <div class="wrap wrap--narrow">
-  <?php cdp_topbar('Historique des parties', 'history', $config['app_title']); ?>
+  <?php cdp_topbar('Historique des parties', 'history', $config['app_title'], ['dashboard']); ?>
 
   <div id="history-list" class="history-list"></div>
   <p id="history-empty" class="muted hidden" style="text-align:center;padding:40px 0">

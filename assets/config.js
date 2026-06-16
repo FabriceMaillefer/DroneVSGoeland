@@ -74,6 +74,8 @@
     $('pat_va').value = pat.victory_a || '';
     $('pat_vb').value = pat.victory_b || '';
     $('pat_neutral').value = pat.neutral || '';
+    $('pat_ta').value = pat.transition_a || '';
+    $('pat_tb').value = pat.transition_b || '';
     buildPosteRows(cfg);
   }
 
@@ -101,7 +103,9 @@
           domination_b: $('pat_db').value,
           victory_a: $('pat_va').value,
           victory_b: $('pat_vb').value,
-          neutral: $('pat_neutral').value
+          neutral: $('pat_neutral').value,
+          transition_a: $('pat_ta').value,
+          transition_b: $('pat_tb').value
         }
       }
     };
@@ -139,10 +143,18 @@
   var testStatus = $('test-status');
   var stopBtn = $('test-stop');
   var strudelReady = false;   // initStrudel() + 1er chargement samples faits
+  var audioReady = false;     // initAudio() résolu : AudioWorklets chargés ?
   var playingBtn = null;      // bouton ▶ actuellement actif
+  var oneshotTimer = null;    // coupure différée d'une transition (jouée une fois)
+
+  // Patterns joués UNE fois (transitions) : coupés après ~1 cycle de .cpm(30) (≈2 s).
+  var ONESHOT_TARGETS = { pat_ta: true, pat_tb: true };
+  var ONESHOT_MS = 2200;
 
   function S() { return window.strudel || null; }
-  function scopeReady() { return strudelReady && typeof window.stack === 'function'; }
+  // Prêt à évaluer = scope peuplé (window.stack) ET worklets chargés (audioReady),
+  // sinon le 1er cycle lève « [getTrigger] AudioWorkletNode … ».
+  function scopeReady() { return strudelReady && audioReady && typeof window.stack === 'function'; }
 
   function setStatus(msg) { if (testStatus) testStatus.textContent = msg ? ' — ' + msg : ''; }
 
@@ -172,16 +184,40 @@
     if (!lib || typeof lib.initStrudel !== 'function') return false;
     try {
       lib.initStrudel();
-      // Réactive l'AudioContext pendant le geste (clic ▶).
-      if (typeof lib.getAudioContext === 'function') {
-        var ctx = lib.getAudioContext(); if (ctx && ctx.resume) ctx.resume();
+      // Banques officielles (drum machines, piano, Dirt-Samples, …) : non chargées
+      // par le prebake de @strudel/web. Mêmes manifestes que le moteur du jeu.
+      if (typeof lib.samples === 'function') {
+        var banks = ['tidal-drum-machines.json', 'piano.json', 'Dirt-Samples.json',
+          'EmuSP12.json', 'vcsl.json', 'mridangam.json'];
+        var ds = 'https://raw.githubusercontent.com/felixroos/dough-samples/main/';
+        for (var i = 0; i < banks.length; i++) {
+          try { lib.samples(ds + banks[i]); } catch (e) { /* banque indisponible */ }
+        }
+      }
+      // PENDANT le geste (clic ▶) : initAudio() resume le contexte ET charge les
+      // AudioWorklets ; audioReady passe à true à sa résolution (scopeReady attend).
+      if (typeof lib.initAudio === 'function') {
+        var done = function () { audioReady = true; };
+        try {
+          var p = lib.initAudio();
+          if (p && typeof p.then === 'function') { p.then(done, done); } else { done(); }
+        } catch (e) { done(); }
+      } else {
+        // Fallback (librairie sans initAudio).
+        audioReady = true;
+        if (typeof lib.getAudioContext === 'function') {
+          var ctx = lib.getAudioContext(); if (ctx && ctx.resume) ctx.resume();
+        }
       }
       strudelReady = true;
       return true;
     } catch (e) { return false; }
   }
 
+  function clearOneshot() { if (oneshotTimer) { clearTimeout(oneshotTimer); oneshotTimer = null; } }
+
   function stopSound() {
+    clearOneshot();
     var lib = S();
     if (lib && typeof lib.hush === 'function') { try { lib.hush(); } catch (e) {} }
     markPlaying(null);
@@ -202,10 +238,20 @@
         return;
       }
       loadSamples();
+      clearOneshot();
       try {
         S().evaluate(code);
         markPlaying(btn);
-        setStatus('lecture en cours');
+        // Transitions : jouées UNE fois, puis coupées automatiquement.
+        if (ONESHOT_TARGETS[textareaId]) {
+          setStatus('lecture (une fois)');
+          oneshotTimer = setTimeout(function () {
+            oneshotTimer = null;
+            if (playingBtn === btn) stopSound();
+          }, ONESHOT_MS);
+        } else {
+          setStatus('lecture en cours');
+        }
       } catch (e) {
         setStatus('erreur dans le pattern : ' + (e && e.message ? e.message : e));
       }

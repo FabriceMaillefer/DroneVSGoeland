@@ -28,9 +28,6 @@ function cdp_asset(string $path): string
     return $path . '?v=' . rawurlencode($ver);
 }
 
-/** Logo SVG (drone stylisé + croix), réutilisé dans les en-têtes. */
-const CDP_LOGO_SVG = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none"><circle cx="5" cy="5" r="2.6" stroke="#fff" stroke-width="1.6"/><circle cx="19" cy="5" r="2.6" stroke="#fff" stroke-width="1.6"/><circle cx="5" cy="19" r="2.6" stroke="#fff" stroke-width="1.6"/><circle cx="19" cy="19" r="2.6" stroke="#fff" stroke-width="1.6"/><line x1="7" y1="7" x2="17" y2="17" stroke="#fff" stroke-width="1.5"/><line x1="17" y1="7" x2="7" y2="17" stroke="#fff" stroke-width="1.5"/><rect x="9.5" y="9.5" width="5" height="5" rx="1.3" fill="#fff"/></svg>';
-
 /** Émet l'ouverture du document + <head> (polices Chakra Petch / Space Grotesk + CSS). */
 function cdp_head(string $title): void
 {
@@ -63,22 +60,34 @@ function cdp_client_config(array $config): array
     ];
 }
 
-/** Barre supérieure avec logo + titre + navigation. */
-function cdp_topbar(string $heading, string $active = '', string $appTitle = 'Albé 2026'): void
+/**
+ * Barre supérieure : titre de la page + navigation minimale.
+ *
+ * Le tableau de bord est le hub (il porte déjà l'accès Config / Historique via
+ * icônes). Les pages secondaires se contentent de revenir au tableau de bord et,
+ * si pertinent, d'ouvrir la démo « Sons » ; on n'affiche jamais de lien vers la
+ * page courante ni de logo décoratif.
+ *
+ * $nav : liste ordonnée des liens à afficher (clés de $all). Par défaut retour
+ * au tableau + Sons. La page Historique, par ex., passe ['dashboard'] seul
+ * (la démo sons n'y est pas utile).
+ */
+function cdp_topbar(string $heading, string $active = '', string $appTitle = 'Albé 2026', array $nav = ['dashboard', 'sounds']): void
 {
     $h = htmlspecialchars($heading, ENT_QUOTES);
-    $links = [
-        'dashboard' => ['index.php', 'Tableau de bord'],
-        'config'    => ['config.php', 'Configuration'],
-        'history'   => ['history.php', 'Historique'],
+    $all = [
+        'dashboard' => ['index.php', '← Tableau de bord'],
+        'sounds'    => ['demo.php', 'Sons'],
     ];
     echo '<div class="topbar">';
-    echo '<div class="logo">' . CDP_LOGO_SVG . '</div>';
     echo '<div><div class="kicker">' . htmlspecialchars($appTitle, ENT_QUOTES) . '</div><h1>' . $h . '</h1></div>';
     echo '<nav class="nav">';
-    foreach ($links as $key => [$href, $label]) {
-        $cls = 'btn btn--ghost btn--sm' . ($key === $active ? ' is-active' : '');
-        echo '<a class="' . $cls . '" href="' . $href . '">' . htmlspecialchars($label) . '</a>';
+    foreach ($nav as $key) {
+        if ($key === $active || !isset($all[$key])) {
+            continue; // pas de lien vers la page courante (ni de clé inconnue)
+        }
+        [$href, $label] = $all[$key];
+        echo '<a class="btn btn--ghost btn--sm" href="' . $href . '">' . htmlspecialchars($label) . '</a>';
     }
     echo '</nav></div>';
 }
