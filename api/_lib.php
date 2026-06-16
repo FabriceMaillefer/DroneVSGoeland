@@ -75,13 +75,113 @@ function cdp_default_config(): array
         'sound_poste_id'       => 3,
         'team_names'           => ['A' => 'DRONES', 'B' => 'GOÉLAND'],
         'postes'               => $postes,
+        // Bande-son générée par Strudel (voir assets/audio.js + assets/vendor/strudel-web.js).
+        //  - base_url : dossier d'où sont chargés les samples (wav/mp3 déposés dans /audio) ;
+        //  - samples  : nom logique -> fichier (ou tableau de fichiers pour des variantes :0 :1) ;
+        //  - patterns : code Strudel joué pour chaque état du jeu (vide = silence).
+        // Ces défauts ne servent que si data/config.json est absent ; la config réelle
+        // (éditable en page Configuration) y est persistée.
         'audio'                => [
-            'domination_a' => 'audio/domination_a.wav',
-            'domination_b' => 'audio/domination_b.wav',
-            'victory_a'    => 'audio/victory_a.wav',
-            'victory_b'    => 'audio/victory_b.wav',
+            'base_url' => 'audio/samples/',
+            'samples'  => [
+                'aircraft' => 'aircraft/aircraft.wav',
+                'seagull'  => 'seagull/seagull.mp3',
+            ],
+            'patterns' => [
+                'domination_a' => CDP_PATTERN_AIRCRAFT,
+                'domination_b' => CDP_PATTERN_SEAGULL,
+                'victory_a'    => CDP_PATTERN_AIRCRAFT,
+                'victory_b'    => CDP_PATTERN_SEAGULL,
+                'neutral'      => '',
+            ],
         ],
     ];
+}
+
+// Patterns Strudel par défaut (adaptés hors-ligne : oscillateurs + vos samples).
+// Nowdoc => contenu littéral, aucun échappement requis.
+const CDP_PATTERN_AIRCRAFT = <<<'STRUDEL'
+// Hangar / Aircraft — ambiance grave et tendue (adapté hors-ligne)
+stack(
+  // Sample Aircraft : ralenti en nappe de fond, grondement irrégulier
+  s("aircraft ~ aircraft ~")
+    .degradeBy(0.35)
+    .speed(rand.range(0.45, 0.65))
+    .pan(rand)
+    .gain(rand.range(0.6, 1))
+    .room(0.5),
+  // Drone sub : fondation grave, dissonance mineure (D + Eb)
+  note("<d1 d1 eb1 d1>").s("sawtooth")
+    .lpf(sine.range(120, 400).slow(16)).lpq(8)
+    .attack(1).release(2)
+    .gain(0.55),
+  // Pulsation grave et rythmée (coeur du morceau)
+  note("<d2 ~ d2 eb2 ~ d2 ~ ~>")
+    .struct("x ~ x x ~ x ~ ~")
+    .s("square").lpf(500).lpq(10)
+    .attack(0.005).release(0.18)
+    .shape(0.4).gain(0.5),
+  // Nappe dissonante aiguë, lointaine (tension)
+  note("<[d4,eb4] ~ [c4,d4] ~>").s("sawtooth")
+    .attack(2).release(3).lpf(1500)
+    .gain(0.22).room(0.6),
+  // Clang métallique épars : bruit blanc filtré (remplace le sample "metal")
+  s("~ ~ white ~")
+    .attack(0.001).release(0.09).hpf(3000)
+    .degradeBy(0.5)
+    .gain(0.5).pan(rand).room(0.7)
+).room(0.35).cpm(60)
+STRUDEL;
+
+const CDP_PATTERN_SEAGULL = <<<'STRUDEL'
+// Bord de mer — 8 mesures (adapté hors-ligne)
+stack(
+  // Nappe d'accords (section A puis B)
+  note("<[d3,f#3,a3] [a2,e3,a3] [b2,f#3,b3] [g2,d3,g3] [d3,f#3,a3] [g2,b2,d3] [a2,c#3,e3] [a2,e3,a3]>")
+    .s("sawtooth")
+    .attack(0.6).release(1.4)
+    .lpf(sine.range(1200, 2400).slow(8))
+    .gain(0.5).room(0.85),
+  // Basse rythmée (gm_synth_bass_1 -> sawtooth)
+  note("<d2 a1 b1 g1 d2 g1 a1 a1>")
+    .struct("x ~ ~ x ~ x ~ ~")
+    .s("sawtooth")
+    .lpf(sine.range(350, 900).slow(8)).lpq(6)
+    .attack(0.005).release(0.26)
+    .gain(0.72).room(0.15),
+  // Sub sinus (profondeur)
+  note("<d1 a0 b0 g0 d1 g0 a0 a0>").s("sine")
+    .attack(0.02).release(0.5).gain(0.5),
+  // Guitare arpégée (gm_acoustic_guitar_nylon -> triangle plucké)
+  note("<d4 f#4 a4 f#4 a4 d5 a4 f#4>*2")
+    .s("triangle")
+    .attack(0.005).release(0.3)
+    .sometimesBy(0.3, x => x.add(note(12)))
+    .gain(0.5).room(0.5)
+    .delay(0.3).delaytime(0.375).delayfeedback(0.35),
+  // Mélodie sifflée (gm_whistle -> sine)
+  note("<[a4 ~ b4 a4] [a4 ~ f#4 ~] [b4 ~ a4 f#4] [d4 ~ e4 f#4] [f#4 ~ e4 d4] [b4 ~ d5 b4] [a4 ~ c#5 ~] [a4 ~ ~ ~]>")
+    .s("sine")
+    .attack(0.02).release(0.25)
+    .gain(0.38).room(0.9),
+  // Goélands épars (votre sample)
+  s("~ ~ seagull ~")
+    .degradeBy(0.4)
+    .gain(1).pan(rand).room(0.9).speed(rand.range(0.9, 1.1)),
+  // Ressac / hats (RolandTR808 -> bruit blanc court filtré)
+  s("~ white ~ white")
+    .attack(0.001).release(0.05).hpf(6000)
+    .gain(0.13).room(0.6)
+).room(0.5).cpm(55)
+STRUDEL;
+
+/** Nettoie un chemin de sample : relatif, sans traversée de répertoire, longueur bornée. */
+function cdp_clean_sample_path(string $path): string
+{
+    $p = str_replace('\\', '/', trim($path));
+    $p = ltrim($p, '/');
+    $p = str_replace('../', '', $p);          // pas de remontée de répertoire
+    return mb_substr($p, 0, 200);
 }
 
 /** Charge la configuration (lecture simple, pas de verrou). */
@@ -158,10 +258,45 @@ function cdp_sanitize_config(array $in): array
     }
     $out['sound_poste_id'] = $soundId;
 
-    // Chemins audio (chaînes libres ; on garde les défauts si vides).
-    foreach (['domination_a', 'domination_b', 'victory_a', 'victory_b'] as $k) {
-        if (isset($in['audio'][$k]) && is_string($in['audio'][$k]) && trim($in['audio'][$k]) !== '') {
-            $out['audio'][$k] = trim($in['audio'][$k]);
+    // ---- Bande-son Strudel -------------------------------------------------
+    // base_url : dossier des samples (défaut conservé si vide).
+    if (isset($in['audio']['base_url']) && is_string($in['audio']['base_url']) && trim($in['audio']['base_url']) !== '') {
+        $out['audio']['base_url'] = mb_substr(trim($in['audio']['base_url']), 0, 200);
+    }
+
+    // samples : map nom -> fichier (ou tableau de fichiers). Noms = identifiants sûrs.
+    $samples = [];
+    if (isset($in['audio']['samples']) && is_array($in['audio']['samples'])) {
+        foreach ($in['audio']['samples'] as $name => $val) {
+            $name = trim((string) $name);
+            if (!preg_match('/^[A-Za-z0-9_]{1,40}$/', $name)) {
+                continue; // nom invalide : ignoré
+            }
+            if (is_array($val)) {
+                $files = [];
+                foreach ($val as $f) {
+                    if (is_string($f) && trim($f) !== '') {
+                        $files[] = cdp_clean_sample_path($f);
+                    }
+                }
+                if ($files) {
+                    $samples[$name] = $files;
+                }
+            } elseif (is_string($val) && trim($val) !== '') {
+                $samples[$name] = cdp_clean_sample_path($val);
+            }
+            if (count($samples) >= 64) {
+                break; // garde-fou
+            }
+        }
+    }
+    $out['audio']['samples'] = $samples ?: $def['audio']['samples'];
+
+    // patterns : code Strudel par état (5 clés fixes), borné en longueur.
+    $out['audio']['patterns'] = $def['audio']['patterns'];
+    foreach (['domination_a', 'domination_b', 'victory_a', 'victory_b', 'neutral'] as $k) {
+        if (isset($in['audio']['patterns'][$k]) && is_string($in['audio']['patterns'][$k])) {
+            $out['audio']['patterns'][$k] = mb_substr(trim($in['audio']['patterns'][$k]), 0, 2000);
         }
     }
 

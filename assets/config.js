@@ -33,6 +33,31 @@
 
   function escAttr(s) { return String(s == null ? '' : s).replace(/"/g, '&quot;').replace(/</g, '&lt;'); }
 
+  // Samples <-> texte « nom: fichier » (une ligne par sample ; variantes séparées par des virgules).
+  function samplesToText(samples) {
+    samples = samples || {};
+    return Object.keys(samples).map(function (name) {
+      var v = samples[name];
+      var files = Array.isArray(v) ? v.join(', ') : String(v == null ? '' : v);
+      return name + ': ' + files;
+    }).join('\n');
+  }
+  function textToSamples(text) {
+    var out = {};
+    String(text || '').split('\n').forEach(function (line) {
+      line = line.trim();
+      if (!line) return;
+      var i = line.indexOf(':');
+      if (i < 0) return;
+      var name = line.slice(0, i).trim();
+      var rest = line.slice(i + 1).trim();
+      if (!name || !rest) return;
+      var files = rest.split(',').map(function (s) { return s.trim(); }).filter(Boolean);
+      out[name] = (files.length > 1) ? files : files[0];
+    });
+    return out;
+  }
+
   function fill(cfg) {
     $('app_title').value = cfg.app_title || 'Albé 2026';
     $('victory_hold').value = cfg.victory_hold_seconds;
@@ -40,10 +65,15 @@
     $('poll_poste').value = cfg.poll_poste_ms || 3000;
     $('name_A').value = cfg.team_names.A;
     $('name_B').value = cfg.team_names.B;
-    $('audio_da').value = cfg.audio.domination_a;
-    $('audio_db').value = cfg.audio.domination_b;
-    $('audio_va').value = cfg.audio.victory_a;
-    $('audio_vb').value = cfg.audio.victory_b;
+    var audio = cfg.audio || {};
+    var pat = audio.patterns || {};
+    $('audio_base').value = audio.base_url || 'audio/';
+    $('audio_samples').value = samplesToText(audio.samples);
+    $('pat_da').value = pat.domination_a || '';
+    $('pat_db').value = pat.domination_b || '';
+    $('pat_va').value = pat.victory_a || '';
+    $('pat_vb').value = pat.victory_b || '';
+    $('pat_neutral').value = pat.neutral || '';
     buildPosteRows(cfg);
   }
 
@@ -64,10 +94,15 @@
       team_names: { A: $('name_A').value, B: $('name_B').value },
       postes: postes,
       audio: {
-        domination_a: $('audio_da').value,
-        domination_b: $('audio_db').value,
-        victory_a: $('audio_va').value,
-        victory_b: $('audio_vb').value
+        base_url: $('audio_base').value,
+        samples: textToSamples($('audio_samples').value),
+        patterns: {
+          domination_a: $('pat_da').value,
+          domination_b: $('pat_db').value,
+          victory_a: $('pat_va').value,
+          victory_b: $('pat_vb').value,
+          neutral: $('pat_neutral').value
+        }
       }
     };
   }
@@ -94,6 +129,97 @@
       }
     }).catch(function () { status.textContent = 'Erreur réseau.'; });
   });
+
+  /* ==================================================================
+     Testeur Strudel : écouter un pattern directement depuis cette page.
+     Joue le TEXTE COURANT du textarea (édité, non enregistré). Init de
+     Strudel à la demande (geste utilisateur), attente du scope async,
+     rechargement des samples saisis, puis evaluate(). Stop = hush().
+     ================================================================== */
+  var testStatus = $('test-status');
+  var stopBtn = $('test-stop');
+  var strudelReady = false;   // initStrudel() + 1er chargement samples faits
+  var playingBtn = null;      // bouton ▶ actuellement actif
+
+  function S() { return window.strudel || null; }
+  function scopeReady() { return strudelReady && typeof window.stack === 'function'; }
+
+  function setStatus(msg) { if (testStatus) testStatus.textContent = msg ? ' — ' + msg : ''; }
+
+  function markPlaying(btn) {
+    if (playingBtn && playingBtn !== btn) {
+      playingBtn.classList.remove('is-playing');
+      playingBtn.textContent = '▶ Tester';
+    }
+    playingBtn = btn || null;
+    if (btn) { btn.classList.add('is-playing'); btn.textContent = '⏸ En lecture'; }
+  }
+
+  // Recharge les samples saisis (idempotent) à chaque test : prend en compte les édits.
+  function loadSamples() {
+    var lib = S();
+    if (!lib || typeof lib.samples !== 'function') return;
+    var map = textToSamples($('audio_samples').value);
+    var base = $('audio_base').value || 'audio/';
+    if (Object.keys(map).length) {
+      try { lib.samples(map, base); } catch (e) { /* ignoré */ }
+    }
+  }
+
+  function ensureStrudel() {
+    if (strudelReady) return true;
+    var lib = S();
+    if (!lib || typeof lib.initStrudel !== 'function') return false;
+    try {
+      lib.initStrudel();
+      // Réactive l'AudioContext pendant le geste (clic ▶).
+      if (typeof lib.getAudioContext === 'function') {
+        var ctx = lib.getAudioContext(); if (ctx && ctx.resume) ctx.resume();
+      }
+      strudelReady = true;
+      return true;
+    } catch (e) { return false; }
+  }
+
+  function stopSound() {
+    var lib = S();
+    if (lib && typeof lib.hush === 'function') { try { lib.hush(); } catch (e) {} }
+    markPlaying(null);
+    setStatus('arrêté');
+  }
+
+  // Joue le contenu d'un textarea ; attend le scope si l'init vient d'être lancée.
+  function playPattern(textareaId, btn) {
+    if (!ensureStrudel()) { setStatus('librairie Strudel indisponible'); return; }
+    var code = ($(textareaId).value || '').trim();
+    if (code === '') { stopSound(); setStatus('pattern vide (silence)'); return; }
+    setStatus('chargement…');
+    var tries = 0;
+    (function attempt() {
+      if (!scopeReady()) {
+        if (tries++ > 60) { setStatus('initialisation trop longue'); return; }
+        setTimeout(attempt, 100);
+        return;
+      }
+      loadSamples();
+      try {
+        S().evaluate(code);
+        markPlaying(btn);
+        setStatus('lecture en cours');
+      } catch (e) {
+        setStatus('erreur dans le pattern : ' + (e && e.message ? e.message : e));
+      }
+    })();
+  }
+
+  Array.prototype.forEach.call(document.querySelectorAll('.test-play'), function (btn) {
+    btn.addEventListener('click', function () {
+      // Re-cliquer sur le bouton actif = arrêt.
+      if (btn === playingBtn) { stopSound(); return; }
+      playPattern(btn.getAttribute('data-target'), btn);
+    });
+  });
+  if (stopBtn) stopBtn.addEventListener('click', stopSound);
 
   // Chargement initial : on part de la config injectée, sinon on la récupère.
   if (window.CDP_CONFIG_FULL) fill(window.CDP_CONFIG_FULL);

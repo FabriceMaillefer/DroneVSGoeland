@@ -50,12 +50,56 @@ cdp_head($config['app_title'] . ' — Configuration');
       <span class="hint">nom · attribution initiale · poste sonore</span></div>
     <div id="postes" class="form-grid"></div>
 
-    <div class="section-head"><span style="color:var(--a);font-family:var(--font-display);font-weight:700">03</span><h2>Bandes-son</h2>
-      <span class="hint">chemins relatifs (déposer les fichiers dans /audio)</span></div>
-    <div class="field"><label for="audio_da">Domination équipe A</label><input type="text" id="audio_da" value="audio/domination_a.wav"></div>
-    <div class="field"><label for="audio_db">Domination équipe B</label><input type="text" id="audio_db" value="audio/domination_b.wav"></div>
-    <div class="field"><label for="audio_va">Victoire équipe A</label><input type="text" id="audio_va" value="audio/victory_a.wav"></div>
-    <div class="field"><label for="audio_vb">Victoire équipe B</label><input type="text" id="audio_vb" value="audio/victory_b.wav"></div>
+    <style>
+      .pattern-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:4px}
+      .pattern-head label{margin:0}
+      .test-play.is-playing{background:var(--a);color:#fff;border-color:var(--a)}
+    </style>
+
+    <div class="section-head"><span style="color:var(--a);font-family:var(--font-display);font-weight:700">03</span><h2>Bande-son (Strudel)</h2>
+      <span class="hint">samples du dossier /audio + patterns Strudel par état</span></div>
+
+    <div class="field">
+      <label for="audio_base">Dossier des samples (base_url)</label>
+      <input type="text" id="audio_base" value="audio/">
+    </div>
+
+    <div class="field">
+      <label for="audio_samples">Samples — une ligne <code>nom: fichier.wav</code> (variantes : <code>nom: a.wav, b.wav</code>)</label>
+      <textarea id="audio_samples" rows="6" spellcheck="false" style="font-family:var(--font-mono,monospace);font-size:13px;width:100%;resize:vertical"></textarea>
+      <span class="hint">Déposez les fichiers (.wav/.mp3/.ogg) dans le dossier ci-dessus, puis donnez-leur un nom logique utilisable dans les patterns via <code>s("nom")</code>.</span>
+    </div>
+
+    <p class="muted" style="font-size:13px;margin:4px 0">
+      Patterns <a href="https://strudel.cc/learn/" target="_blank" rel="noopener">Strudel</a> joués selon l'état du « poste sonore » (et à la victoire). Laisser vide = silence.
+      Utilisez <strong>▶ Tester</strong> pour écouter le pattern courant (édité, non enregistré) ; <strong>⏹ Stop</strong> coupe le son.
+      <span class="muted" id="test-status"></span>
+    </div>
+
+    <div class="field">
+      <div class="pattern-head"><label for="pat_da">Domination équipe A</label>
+        <button type="button" class="btn btn--ghost btn--sm test-play" data-target="pat_da">▶ Tester</button></div>
+      <textarea id="pat_da" rows="14" spellcheck="false" style="font-family:var(--font-mono,monospace);font-size:13px;width:100%;resize:vertical;line-height:1.45"></textarea></div>
+    <div class="field">
+      <div class="pattern-head"><label for="pat_db">Domination équipe B</label>
+        <button type="button" class="btn btn--ghost btn--sm test-play" data-target="pat_db">▶ Tester</button></div>
+      <textarea id="pat_db" rows="14" spellcheck="false" style="font-family:var(--font-mono,monospace);font-size:13px;width:100%;resize:vertical;line-height:1.45"></textarea></div>
+    <div class="field">
+      <div class="pattern-head"><label for="pat_va">Victoire équipe A</label>
+        <button type="button" class="btn btn--ghost btn--sm test-play" data-target="pat_va">▶ Tester</button></div>
+      <textarea id="pat_va" rows="14" spellcheck="false" style="font-family:var(--font-mono,monospace);font-size:13px;width:100%;resize:vertical;line-height:1.45"></textarea></div>
+    <div class="field">
+      <div class="pattern-head"><label for="pat_vb">Victoire équipe B</label>
+        <button type="button" class="btn btn--ghost btn--sm test-play" data-target="pat_vb">▶ Tester</button></div>
+      <textarea id="pat_vb" rows="14" spellcheck="false" style="font-family:var(--font-mono,monospace);font-size:13px;width:100%;resize:vertical;line-height:1.45"></textarea></div>
+    <div class="field">
+      <div class="pattern-head"><label for="pat_neutral">Neutre (aucune équipe dominante)</label>
+        <button type="button" class="btn btn--ghost btn--sm test-play" data-target="pat_neutral">▶ Tester</button></div>
+      <textarea id="pat_neutral" rows="6" spellcheck="false" style="font-family:var(--font-mono,monospace);font-size:13px;width:100%;resize:vertical;line-height:1.45" placeholder="vide = silence"></textarea></div>
+
+    <div style="margin-top:6px">
+      <button type="button" id="test-stop" class="btn btn--ghost btn--sm">⏹ Stop</button>
+    </div>
 
     <div style="display:flex;align-items:center;gap:16px;margin-top:10px">
       <button type="submit" class="btn btn--a">Enregistrer</button>
@@ -66,6 +110,7 @@ cdp_head($config['app_title'] . ' — Configuration');
 </div>
 
 <script src="<?= htmlspecialchars(cdp_asset('assets/core.js'), ENT_QUOTES) ?>"></script>
+<script src="<?= htmlspecialchars(cdp_asset('assets/vendor/strudel-web.js'), ENT_QUOTES) ?>"></script>
 <script src="<?= htmlspecialchars(cdp_asset('assets/config.js'), ENT_QUOTES) ?>"></script>
 </body>
 </html>

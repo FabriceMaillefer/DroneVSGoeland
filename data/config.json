@@ -9,17 +9,49 @@
         "B": "GOÉLAND"
     },
     "postes": [
-        { "id": 1, "name": "Poste 1", "initial": "neutral" },
-        { "id": 2, "name": "Poste 2", "initial": "neutral" },
-        { "id": 3, "name": "Poste 3", "initial": "neutral" },
-        { "id": 4, "name": "Poste 4", "initial": "neutral" },
-        { "id": 5, "name": "Poste 5", "initial": "neutral" },
-        { "id": 6, "name": "Poste 6", "initial": "neutral" }
+        {
+            "id": 1,
+            "name": "Poste 1",
+            "initial": "neutral"
+        },
+        {
+            "id": 2,
+            "name": "Poste 2",
+            "initial": "neutral"
+        },
+        {
+            "id": 3,
+            "name": "Poste 3",
+            "initial": "neutral"
+        },
+        {
+            "id": 4,
+            "name": "Poste 4",
+            "initial": "neutral"
+        },
+        {
+            "id": 5,
+            "name": "Poste 5",
+            "initial": "neutral"
+        },
+        {
+            "id": 6,
+            "name": "Poste 6",
+            "initial": "neutral"
+        }
     ],
     "audio": {
-        "domination_a": "audio/domination_a.wav",
-        "domination_b": "audio/domination_b.wav",
-        "victory_a": "audio/victory_a.wav",
-        "victory_b": "audio/victory_b.wav"
+        "base_url": "audio/samples/",
+        "samples": {
+            "aircraft": "aircraft/aircraft.wav",
+            "seagull": "seagull/seagull.mp3"
+        },
+        "patterns": {
+            "domination_a": "// Hangar / Aircraft — ambiance grave et tendue (adapté hors-ligne)\nstack(\n  // Sample Aircraft : ralenti en nappe de fond, grondement irrégulier\n  s(\"aircraft ~ aircraft ~\")\n    .degradeBy(0.35)\n    .speed(rand.range(0.45, 0.65))\n    .pan(rand)\n    .gain(rand.range(0.6, 1))\n    .room(0.5),\n  // Drone sub : fondation grave, dissonance mineure (D + Eb)\n  note(\"<d1 d1 eb1 d1>\").s(\"sawtooth\")\n    .lpf(sine.range(120, 400).slow(16)).lpq(8)\n    .attack(1).release(2)\n    .gain(0.55),\n  // Pulsation grave et rythmée (coeur du morceau)\n  note(\"<d2 ~ d2 eb2 ~ d2 ~ ~>\")\n    .struct(\"x ~ x x ~ x ~ ~\")\n    .s(\"square\").lpf(500).lpq(10)\n    .attack(0.005).release(0.18)\n    .shape(0.4).gain(0.5),\n  // Nappe dissonante aiguë, lointaine (tension)\n  note(\"<[d4,eb4] ~ [c4,d4] ~>\").s(\"sawtooth\")\n    .attack(2).release(3).lpf(1500)\n    .gain(0.22).room(0.6),\n  // Clang métallique épars : bruit blanc filtré (remplace le sample \"metal\")\n  s(\"~ ~ white ~\")\n    .attack(0.001).release(0.09).hpf(3000)\n    .degradeBy(0.5)\n    .gain(0.5).pan(rand).room(0.7)\n).room(0.35).cpm(60)",
+            "domination_b": "// Bord de mer — 8 mesures (adapté hors-ligne)\nstack(\n  // Nappe d'accords (section A puis B)\n  note(\"<[d3,f#3,a3] [a2,e3,a3] [b2,f#3,b3] [g2,d3,g3] [d3,f#3,a3] [g2,b2,d3] [a2,c#3,e3] [a2,e3,a3]>\")\n    .s(\"sawtooth\")\n    .attack(0.6).release(1.4)\n    .lpf(sine.range(1200, 2400).slow(8))\n    .gain(0.5).room(0.85),\n  // Basse rythmée (gm_synth_bass_1 -> sawtooth)\n  note(\"<d2 a1 b1 g1 d2 g1 a1 a1>\")\n    .struct(\"x ~ ~ x ~ x ~ ~\")\n    .s(\"sawtooth\")\n    .lpf(sine.range(350, 900).slow(8)).lpq(6)\n    .attack(0.005).release(0.26)\n    .gain(0.72).room(0.15),\n  // Sub sinus (profondeur)\n  note(\"<d1 a0 b0 g0 d1 g0 a0 a0>\").s(\"sine\")\n    .attack(0.02).release(0.5).gain(0.5),\n  // Guitare arpégée (gm_acoustic_guitar_nylon -> triangle plucké)\n  note(\"<d4 f#4 a4 f#4 a4 d5 a4 f#4>*2\")\n    .s(\"triangle\")\n    .attack(0.005).release(0.3)\n    .sometimesBy(0.3, x => x.add(note(12)))\n    .gain(0.5).room(0.5)\n    .delay(0.3).delaytime(0.375).delayfeedback(0.35),\n  // Mélodie sifflée (gm_whistle -> sine)\n  note(\"<[a4 ~ b4 a4] [a4 ~ f#4 ~] [b4 ~ a4 f#4] [d4 ~ e4 f#4] [f#4 ~ e4 d4] [b4 ~ d5 b4] [a4 ~ c#5 ~] [a4 ~ ~ ~]>\")\n    .s(\"sine\")\n    .attack(0.02).release(0.25)\n    .gain(0.38).room(0.9),\n  // Goélands épars (votre sample)\n  s(\"~ ~ seagull ~\")\n    .degradeBy(0.4)\n    .gain(1).pan(rand).room(0.9).speed(rand.range(0.9, 1.1)),\n  // Ressac / hats (RolandTR808 -> bruit blanc court filtré)\n  s(\"~ white ~ white\")\n    .attack(0.001).release(0.05).hpf(6000)\n    .gain(0.13).room(0.6)\n).room(0.5).cpm(55)",
+            "victory_a": "// Hangar / Aircraft — ambiance grave et tendue (adapté hors-ligne)\nstack(\n  // Sample Aircraft : ralenti en nappe de fond, grondement irrégulier\n  s(\"aircraft ~ aircraft ~\")\n    .degradeBy(0.35)\n    .speed(rand.range(0.45, 0.65))\n    .pan(rand)\n    .gain(rand.range(0.6, 1))\n    .room(0.5),\n  // Drone sub : fondation grave, dissonance mineure (D + Eb)\n  note(\"<d1 d1 eb1 d1>\").s(\"sawtooth\")\n    .lpf(sine.range(120, 400).slow(16)).lpq(8)\n    .attack(1).release(2)\n    .gain(0.55),\n  // Pulsation grave et rythmée (coeur du morceau)\n  note(\"<d2 ~ d2 eb2 ~ d2 ~ ~>\")\n    .struct(\"x ~ x x ~ x ~ ~\")\n    .s(\"square\").lpf(500).lpq(10)\n    .attack(0.005).release(0.18)\n    .shape(0.4).gain(0.5),\n  // Nappe dissonante aiguë, lointaine (tension)\n  note(\"<[d4,eb4] ~ [c4,d4] ~>\").s(\"sawtooth\")\n    .attack(2).release(3).lpf(1500)\n    .gain(0.22).room(0.6),\n  // Clang métallique épars : bruit blanc filtré (remplace le sample \"metal\")\n  s(\"~ ~ white ~\")\n    .attack(0.001).release(0.09).hpf(3000)\n    .degradeBy(0.5)\n    .gain(0.5).pan(rand).room(0.7)\n).room(0.35).cpm(60)",
+            "victory_b": "// Bord de mer — 8 mesures (adapté hors-ligne)\nstack(\n  // Nappe d'accords (section A puis B)\n  note(\"<[d3,f#3,a3] [a2,e3,a3] [b2,f#3,b3] [g2,d3,g3] [d3,f#3,a3] [g2,b2,d3] [a2,c#3,e3] [a2,e3,a3]>\")\n    .s(\"sawtooth\")\n    .attack(0.6).release(1.4)\n    .lpf(sine.range(1200, 2400).slow(8))\n    .gain(0.5).room(0.85),\n  // Basse rythmée (gm_synth_bass_1 -> sawtooth)\n  note(\"<d2 a1 b1 g1 d2 g1 a1 a1>\")\n    .struct(\"x ~ ~ x ~ x ~ ~\")\n    .s(\"sawtooth\")\n    .lpf(sine.range(350, 900).slow(8)).lpq(6)\n    .attack(0.005).release(0.26)\n    .gain(0.72).room(0.15),\n  // Sub sinus (profondeur)\n  note(\"<d1 a0 b0 g0 d1 g0 a0 a0>\").s(\"sine\")\n    .attack(0.02).release(0.5).gain(0.5),\n  // Guitare arpégée (gm_acoustic_guitar_nylon -> triangle plucké)\n  note(\"<d4 f#4 a4 f#4 a4 d5 a4 f#4>*2\")\n    .s(\"triangle\")\n    .attack(0.005).release(0.3)\n    .sometimesBy(0.3, x => x.add(note(12)))\n    .gain(0.5).room(0.5)\n    .delay(0.3).delaytime(0.375).delayfeedback(0.35),\n  // Mélodie sifflée (gm_whistle -> sine)\n  note(\"<[a4 ~ b4 a4] [a4 ~ f#4 ~] [b4 ~ a4 f#4] [d4 ~ e4 f#4] [f#4 ~ e4 d4] [b4 ~ d5 b4] [a4 ~ c#5 ~] [a4 ~ ~ ~]>\")\n    .s(\"sine\")\n    .attack(0.02).release(0.25)\n    .gain(0.38).room(0.9),\n  // Goélands épars (votre sample)\n  s(\"~ ~ seagull ~\")\n    .degradeBy(0.4)\n    .gain(1).pan(rand).room(0.9).speed(rand.range(0.9, 1.1)),\n  // Ressac / hats (RolandTR808 -> bruit blanc court filtré)\n  s(\"~ white ~ white\")\n    .attack(0.001).release(0.05).hpf(6000)\n    .gain(0.13).room(0.6)\n).room(0.5).cpm(55)",
+            "neutral": ""
+        }
     }
 }

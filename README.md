@@ -107,10 +107,20 @@ La config prend effet au **prochain retour en préparation** (Stop / Nouvelle pa
         { "id": 6, "name": "Quai",       "initial": "neutral" }
     ],
     "audio": {
-        "domination_a": "audio/domination_a.wav",
-        "domination_b": "audio/domination_b.wav",
-        "victory_a":    "audio/victory_a.wav",
-        "victory_b":    "audio/victory_b.wav"
+        "base_url": "audio/",
+        "samples": {
+            "drone_a": "domination_a.wav",
+            "drone_b": "domination_b.wav",
+            "win_a":   "victory_a.wav",
+            "win_b":   "victory_b.wav"
+        },
+        "patterns": {
+            "domination_a": "s(\"drone_a\")",
+            "domination_b": "s(\"drone_b\")",
+            "victory_a":    "s(\"win_a\")",
+            "victory_b":    "s(\"win_b\")",
+            "neutral":      ""
+        }
     }
 }
 ```
@@ -125,19 +135,24 @@ La config prend effet au **prochain retour en préparation** (Stop / Nouvelle pa
 
 ---
 
-## Bandes-son
+## Bande-son (Strudel)
 
-Voir **`audio/README.txt`**. En résumé :
+Voir **`audio/README.txt`** pour le détail. En résumé :
 
-- 4 pistes jouées en boucle : `domination_a`, `domination_b`, `victory_a`, `victory_b`.
-- Les fichiers livrés sont des **placeholders** (boucles synthétiques de 2 s, distinctes).
-  **Remplace-les** par tes musiques dans le dossier `audio/` (mêmes noms, ou mets à jour les chemins en config).
-- Le son démarre après le bouton **« Activer le son »** (exigence des navigateurs). Les bascules de piste
-  utilisent un fondu enchaîné ; **le son ne se coupe jamais** lors des polls ou des actions.
-- La bande-son est diffusée **sur le tableau de bord ET sur chaque page de poste** (`poste.php`). La *piste*
-  est commune (déterminée par l'état partagé : poste sonore / victoire), mais chaque appareil lit sa propre
-  copie et doit donc activer le son une fois (un bouton « Activer le son » est présent sur chaque page).
-  Les copies ne sont pas synchronisées au sample près — sans incidence si les téléphones sont éloignés.
+- La bande-son est **générée par [Strudel](https://strudel.cc)** (mini-langage de musique live),
+  embarqué localement dans **`assets/vendor/strudel-web.js`** (aucun accès Internet requis à l'exécution).
+- À chaque état du jeu correspond un **pattern Strudel** (code), évalué automatiquement :
+  `domination_a`, `domination_b`, `victory_a`, `victory_b`, et `neutral` (vide = silence).
+- Les patterns utilisent des **samples** (fichiers `.wav`/`.mp3`/`.ogg` déposés dans `audio/`),
+  chargés via `samples({ nom: "fichier.wav" }, "audio/")` puis joués avec `s("nom")`.
+- **Configuration** (`config.php` → section *Bande-son*, ou `data/config.json` clé `audio`) :
+  `base_url` (dossier des samples), `samples` (nom → fichier(s)), `patterns` (code par état).
+- Le son démarre après le bouton **« Activer le son »** (exigence des navigateurs pour l'AudioContext).
+  Le changement de pattern se fait **sur la mesure**, sans couper le son.
+- La bande-son est diffusée **sur le tableau de bord ET sur chaque page de poste** (`poste.php`). Le *pattern*
+  est commun (déterminé par l'état partagé : poste sonore / victoire), mais chaque appareil joue sa propre
+  copie et doit donc activer le son une fois. Les copies ne sont pas synchronisées au sample près — sans
+  incidence si les téléphones sont éloignés.
 
 ---
 
@@ -182,18 +197,21 @@ assets/
   style.css        Système de design (palette équipes, états, boutons, cartes)
   core.js          Client API + polling ETag/304, icônes, graphe, stats, timeline
   render.js        Rendu partagé (tuiles, score, part du terrain, stats)
-  dashboard.js     Tableau de bord + gestionnaire audio (fondu enchaîné)
+  audio.js         Gestionnaire de bande-son Strudel (patterns par état du jeu)
+  dashboard.js     Tableau de bord
   poste.js         Page poste
   replay.js        Moteur de rejeu
   config.js        Page configuration
   history.js       Page historique
+  vendor/
+    strudel-web.js Librairie Strudel embarquée (@strudel/web, bundle local)
 
 data/
   state.json       État global unique
   config.json      Configuration
   archives/        Une partie archivée = un fichier horodaté
 
-audio/             Les 4 pistes (placeholders fournis)
+audio/             Samples (wav/mp3/ogg) chargés par Strudel — placeholders fournis
 ```
 
 ### Le mécanisme de synchronisation (ETag / 304)

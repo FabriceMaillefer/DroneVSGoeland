@@ -128,6 +128,7 @@ $nameB = htmlspecialchars($config['team_names']['B']);
 
 <script src="<?= htmlspecialchars(cdp_asset('assets/core.js'), ENT_QUOTES) ?>"></script>
 <script src="<?= htmlspecialchars(cdp_asset('assets/render.js'), ENT_QUOTES) ?>"></script>
+<script src="<?= htmlspecialchars(cdp_asset('assets/vendor/strudel-web.js'), ENT_QUOTES) ?>"></script>
 <script src="<?= htmlspecialchars(cdp_asset('assets/audio.js'), ENT_QUOTES) ?>"></script>
 <script src="<?= htmlspecialchars(cdp_asset('assets/dashboard.js'), ENT_QUOTES) ?>"></script>
 </body>

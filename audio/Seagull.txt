@@ -1,0 +1,48 @@
+// Bord de mer — version longue (8 mesures, deux sections)
+// Coller dans https://strudel.cc, puis Ctrl+Entrée
+setcpm(55)
+stack(
+  // Nappe d'accords sur 8 cycles : section A (1-4) puis B (5-8)
+  note("<[d3,f#3,a3] [a2,e3,a3] [b2,f#3,b3] [g2,d3,g3] [d3,f#3,a3] [g2,b2,d3] [a2,c#3,e3] [a2,e3,a3]>")
+    .s("sawtooth")
+    .attack(0.6).release(1.4)
+    .lpf(sine.range(1200, 2400).slow(8))
+    .gain(0.5).room(0.85),
+
+  // ── BASSE rythmée (suit les fondamentales) ──
+  note("<d2 a1 b1 g1 d2 g1 a1 a1>")
+    .struct("x ~ ~ x ~ x ~ ~")              // groove syncopé (esprit 3,8)
+    .s("gm_synth_bass_1")                   // fallback : .s("sawtooth")
+    .lpf(sine.range(350, 900).slow(8))      // le filtre s'ouvre sur 8 cycles
+    .lpq(6)
+    .attack(0.005).release(0.26)
+    .gain(0.72).room(0.15),
+
+  // ── SUB sinus (profondeur, une octave plus bas) ──
+  note("<d1 a0 b0 g0 d1 g0 a0 a0>")
+    .s("sine")
+    .attack(0.02).release(0.5)
+    .gain(0.5),
+
+  // Guitare arpégée
+  note("<d4 f#4 a4 f#4 a4 d5 a4 f#4>*2")
+    .s("gm_acoustic_guitar_nylon")
+    .sometimesBy(0.3, x => x.add(note(12)))
+    .gain(0.5).room(0.5)
+    .delay(0.3).delaytime(0.375).delayfeedback(0.35),
+
+  // Mélodie sifflée
+  note("<[a4 ~ b4 a4] [a4 ~ f#4 ~] [b4 ~ a4 f#4] [d4 ~ e4 f#4] [f#4 ~ e4 d4] [b4 ~ d5 b4] [a4 ~ c#5 ~] [a4 ~ ~ ~]>")
+    .s("gm_whistle")
+    .gain(0.38).room(0.9),
+
+  // Goélands épars
+  s("~ ~ seagull ~")
+    .degradeBy(0.4)
+    .gain(1).pan(rand).room(0.9).speed(rand.range(0.9, 1.1)),
+
+
+  // Souffle / ressac
+  s("~ hh ~ hh").bank("RolandTR808")
+    .gain(0.13).speed(0.8).room(0.6)
+).room(0.5)

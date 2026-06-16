@@ -55,6 +55,7 @@ cdp_head($config['app_title'] . ' — ' . $posteName);
 
 <script src="<?= htmlspecialchars(cdp_asset('assets/core.js'), ENT_QUOTES) ?>"></script>
 <script src="<?= htmlspecialchars(cdp_asset('assets/render.js'), ENT_QUOTES) ?>"></script>
+<script src="<?= htmlspecialchars(cdp_asset('assets/vendor/strudel-web.js'), ENT_QUOTES) ?>"></script>
 <script src="<?= htmlspecialchars(cdp_asset('assets/audio.js'), ENT_QUOTES) ?>"></script>
 <script src="<?= htmlspecialchars(cdp_asset('assets/poste.js'), ENT_QUOTES) ?>"></script>
 </body>
