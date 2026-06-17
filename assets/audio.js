@@ -11,8 +11,20 @@
      la musique tourne sans interruption ; le changement se fait sur la mesure.
    - Couper le son = hush() ; rétablir = réévaluer le pattern courant.
 
-   La piste commune est déterminée par l'état partagé (poste sonore / victoire),
-   mais chaque appareil joue sa propre copie : non synchronisé au sample près.
+   La piste commune est déterminée par l'état partagé (poste sonore / victoire).
+
+   SYNCHRO ENTRE CLIENTS : l'horloge du cyclist Strudel pose son « cycle 0 » au
+   moment du PREMIER evaluate() (et hush() l'arrête → le prochain evaluate la
+   redémarre à neuf). Donc chaque client démarrait à une phase différente. Ici on
+   CALE tout démarrage « sortie de silence » sur une grille temporelle PARTAGÉE :
+   on diffère ce 1er evaluate() jusqu'au prochain multiple de la période de grille
+   (GRID_CYCLES / GRID_CPS secondes) exprimée en TEMPS SERVEUR (server_time corrige
+   le décalage d'horloge local). Le cps du scheduler étant constant (les patterns
+   règlent leur tempo via .cpm(), un simple _fast() relatif — pas via .cps()), tous
+   les clients partagent alors les mêmes frontières de cycle : leurs « débuts de
+   son » coïncident, et les changements d'état (swap sur la mesure, sans restart)
+   restent calés. La synchro reste perceptive (≈ latences réseau/audio, quelques
+   dizaines de ms), pas à l'échantillon près — impossible en Web Audio multi-appareils.
 
    On accède à la librairie via le namespace global `window.strudel` (posé par
    le bundle IIFE) : initStrudel / samples / evaluate / hush.
@@ -32,6 +44,17 @@
     var sampleMap = AUDIO.samples || {};
     var patterns = AUDIO.patterns || {};
 
+    // Grille de synchronisation entre clients (voir l'en-tête de ce fichier).
+    //  - GRID_CPS : cps du scheduler Strudel. Les patterns règlent leur tempo via
+    //    .cpm() (un _fast() relatif), JAMAIS via .cps()/setcps ; le cps reste donc
+    //    le défaut du cyclist (0.5). Ne le changer que si l'on change ce défaut.
+    //  - GRID_CYCLES : granularité d'alignement, en cycles. 1 cycle = 1/GRID_CPS s
+    //    (2 s par défaut) : départ calé au cycle près (attente ≤ période), donc
+    //    « temps forts » communs à tous les clients. Augmenter pour aligner aussi
+    //    la phase de boucles plus longues, au prix d'un démarrage plus tardif.
+    var GRID_CPS = +AUDIO.grid_cps || 0.5;
+    var GRID_CYCLES = +AUDIO.grid_cycles || 1;
+
     var initialized = false;  // initStrudel() + samples() effectués ?
     var audioReady = false;   // initAudio() résolu : AudioWorklets chargés ?
     var unlocked = false;     // l'utilisateur a-t-il activé le son ?
@@ -39,8 +62,13 @@
     var desiredKey = null;    // état cible : 'domination_a' | … | 'neutral'
     var playedKey = null;     // dernier état réellement enclenché (≠ desiredKey = changement)
     var currentCode = null;   // dernier code Strudel réellement évalué
+    var playing = false;      // l'horloge du cyclist tourne-t-elle (son audible) ? hush() l'arrête.
     var readyTimer = null;    // poll d'attente de disponibilité du scope Strudel
     var transitionTimer = null; // sting de transition en cours → reprise différée de l'ambiance
+    var coldStartTimer = null;  // attente d'alignement sur la grille avant un départ « sortie de silence »
+    var pendingCode = null;     // code à évaluer au prochain top de grille
+    var pendingHoldKey = null;  // si défini : pendingCode est un sting one-shot pour cette clé
+    var clockOffset = 0;        // server_time - Date.now()/1000 (s, fractionnaire) : horloge serveur partagée
 
     // Durée pendant laquelle le sting de transition occupe la sortie avant que
     // l'ambiance reprenne. ~1 cycle à cps 0.5 (défaut Strudel) ; le sting est
@@ -74,6 +102,53 @@
     function clearTransition() {
       if (transitionTimer) { clearTimeout(transitionTimer); transitionTimer = null; }
     }
+    function clearColdStart() {
+      if (coldStartTimer) { clearTimeout(coldStartTimer); coldStartTimer = null; }
+      pendingCode = null; pendingHoldKey = null;
+    }
+
+    // Délai (ms) jusqu'à la prochaine frontière de grille PARTAGÉE : prochain
+    // multiple de la période (GRID_CYCLES/GRID_CPS s) en temps serveur. Tous les
+    // clients calculent le même top (à leur erreur d'offset près) → départs calés.
+    function gridDelayMs() {
+      var period = GRID_CYCLES / GRID_CPS;                 // s par maille de grille
+      var nowServer = Date.now() / 1000 + clockOffset;     // s, horloge serveur partagée
+      var next = Math.ceil(nowServer / period) * period;
+      return Math.max(0, (next - nowServer) * 1000);
+    }
+
+    // Démarrage « sortie de silence » calé sur la grille : on diffère le 1er
+    // evaluate() (qui pose le cycle 0 du cyclist) jusqu'au prochain top partagé.
+    // holdKey ≠ null → code est un sting one-shot : on arme la reprise de l'ambiance.
+    function startAligned(code, holdKey) {
+      pendingCode = code;
+      pendingHoldKey = holdKey || null;
+      if (coldStartTimer) return;   // un top est déjà programmé : il lira pendingCode à l'échéance
+      coldStartTimer = setTimeout(function () {
+        coldStartTimer = null;
+        var S = lib();
+        var code = pendingCode, holdKey = pendingHoldKey;
+        pendingCode = null; pendingHoldKey = null;
+        if (!unlocked || !S) return;
+        // Pas encore prêt (worklets/scope) : on repasse par render() qui repollera.
+        // (currentCode remis à null sinon le dedup de render() court-circuiterait
+        //  la reprogrammation du départ.)
+        if (!scopeReady()) { currentCode = null; render(); return; }
+        if (!code) { currentCode = null; render(); return; }   // redevenu silence pendant l'attente
+        try {
+          S.evaluate(code);
+          playing = true;        // l'horloge du cyclist est posée, calée sur la grille
+          currentCode = code;
+          if (holdKey) {         // sting one-shot → reprise différée de l'ambiance cible
+            clearTransition();
+            transitionTimer = setTimeout(function () {
+              transitionTimer = null;
+              if (playedKey === holdKey) render();
+            }, TRANSITION_HOLD_MS);
+          }
+        } catch (e) { currentCode = null; }
+      }, gridDelayMs());
+    }
 
     // Applique l'état sonore courant : ne (ré)évalue que si le code change.
     function render() {
@@ -94,33 +169,44 @@
         if (sting && prev !== null && prev !== desiredKey) {
           var holdKey = desiredKey;
           currentCode = sting;   // évite que le bloc « ambiance » ne réévalue dans la foulée
-          try {
-            S.evaluate(sting);
-            transitionTimer = setTimeout(function () {
-              transitionTimer = null;
-              if (playedKey === holdKey) render();  // enchaîne sur l'ambiance cible
-            }, TRANSITION_HOLD_MS);
+          if (playing) {
+            // Horloge en marche : le sting démarre sur la mesure (swap immédiat).
+            try {
+              S.evaluate(sting);
+              transitionTimer = setTimeout(function () {
+                transitionTimer = null;
+                if (playedKey === holdKey) render();  // enchaîne sur l'ambiance cible
+              }, TRANSITION_HOLD_MS);
+              return;
+            } catch (e) {
+              currentCode = null;  // sting invalide → bascule directe sur l'ambiance
+            }
+          } else {
+            // Sortie de silence : on cale le départ du sting sur la grille partagée.
+            startAligned(sting, holdKey);
             return;
-          } catch (e) {
-            currentCode = null;  // sting invalide → bascule directe sur l'ambiance
           }
         }
       }
 
-      // Un sting est en cours : ne pas l'écraser ; le timer relancera l'ambiance.
-      if (transitionTimer) return;
+      // Un sting / un départ aligné occupe déjà la sortie : ne pas l'écraser.
+      if (transitionTimer || coldStartTimer) return;
 
       // Ambiance (boucle). Dedup par currentCode → gère mute/unmute et no-op.
       var code = muted ? '' : patternFor(desiredKey);
       if (code === currentCode) return;
       currentCode = code;
-      try {
-        if (code === '') S.hush();
-        else S.evaluate(code);
-      } catch (e) {
-        // Échec transitoire/pattern invalide : on autorise une nouvelle tentative
-        // au prochain changement d'état (apply) plutôt que de rester bloqué.
-        currentCode = null;
+      if (code === '') {
+        try { S.hush(); } catch (e) {}   // hush() arrête l'horloge → prochain départ réaligné
+        playing = false;
+        return;
+      }
+      if (playing) {
+        // Horloge en marche : swap sur la mesure (reste calé sur la grille partagée).
+        try { S.evaluate(code); } catch (e) { currentCode = null; }
+      } else {
+        // Sortie de silence (cold start ou reprise après hush/mute) : départ aligné.
+        startAligned(code, null);
       }
     }
 
@@ -198,6 +284,11 @@
     return {
       // À appeler à chaque mise à jour d'état : ne réévalue que si le pattern change.
       apply: function (state) {
+        // Décalage d'horloge serveur (pour la grille de synchro). server_time est
+        // sous-seconde (microtime) ; server_now (entier) sert de repli.
+        var srv = (state && typeof state.server_time === 'number') ? state.server_time
+                : (state && typeof state.server_now === 'number') ? state.server_now : null;
+        if (srv !== null) clockOffset = srv - Date.now() / 1000;
         desiredKey = computeDesired(state);
         if (unlocked) render();
       },
@@ -232,6 +323,7 @@
       toggleMute: function () {
         muted = !muted;
         clearTransition();   // coupe un éventuel sting en cours pour appliquer le mute tout de suite
+        clearColdStart();    // annule un départ aligné en attente (sinon il jouerait malgré le mute)
         if (unlocked) render();
         return muted;
       },

@@ -52,7 +52,10 @@ if ($inm !== '' && ($inm === $etag || $inm === 'W/' . $etag)) {
     exit; // corps vide
 }
 
-// 200 : état complet. On injecte server_now (epoch serveur) pour que le client
-// puisse corriger le décalage d'horloge et afficher un décompte fiable.
-$state['server_now'] = $now;
+// 200 : état complet. On injecte server_now (epoch serveur, entier) pour que le
+// client corrige le décalage d'horloge et affiche un décompte fiable, ainsi que
+// server_time (epoch sous-seconde) pour la grille de synchro audio (assets/audio.js)
+// qui a besoin d'une précision fine pour caler les départs de son entre clients.
+$state['server_now']  = $now;
+$state['server_time'] = microtime(true);
 echo json_encode($state, CDP_JSON_FLAGS);

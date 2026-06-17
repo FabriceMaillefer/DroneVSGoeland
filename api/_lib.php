@@ -83,6 +83,13 @@ function cdp_default_config(): array
         // (éditable en page Configuration) y est persistée.
         'audio'                => [
             'base_url' => 'audio/samples/',
+            // Grille de synchro entre clients (voir assets/audio.js) :
+            //  - grid_cps    : cps du scheduler Strudel (défaut du cyclist = 0.5).
+            //    Les patterns règlent leur tempo via .cpm() (relatif), pas .cps() :
+            //    ne changer cette valeur que si l'on change ce défaut Strudel.
+            //  - grid_cycles : granularité d'alignement, en cycles (1 = ~2 s ici).
+            'grid_cps'    => 0.5,
+            'grid_cycles' => 1,
             'samples'  => [
                 'aircraft' => 'aircraft/aircraft.wav',
                 'seagull'  => 'seagull/seagull.mp3',
@@ -336,6 +343,14 @@ function cdp_sanitize_config(array $in): array
     // base_url : dossier des samples (défaut conservé si vide).
     if (isset($in['audio']['base_url']) && is_string($in['audio']['base_url']) && trim($in['audio']['base_url']) !== '') {
         $out['audio']['base_url'] = mb_substr(trim($in['audio']['base_url']), 0, 200);
+    }
+
+    // Grille de synchro audio (bornée à des valeurs saines ; défaut sinon).
+    if (isset($in['audio']['grid_cps']) && is_numeric($in['audio']['grid_cps'])) {
+        $out['audio']['grid_cps'] = min(4.0, max(0.05, (float) $in['audio']['grid_cps']));
+    }
+    if (isset($in['audio']['grid_cycles']) && is_numeric($in['audio']['grid_cycles'])) {
+        $out['audio']['grid_cycles'] = min(64, max(1, (int) $in['audio']['grid_cycles']));
     }
 
     // samples : map nom -> fichier (ou tableau de fichiers). Noms = identifiants sûrs.

@@ -58,7 +58,12 @@
     return out;
   }
 
+  // Réglages audio sans champ d'UI (grille de synchro) : on les conserve tels
+  // quels d'un enregistrement à l'autre plutôt que de les écraser par défaut.
+  var loadedAudio = {};
+
   function fill(cfg) {
+    loadedAudio = (cfg && cfg.audio) || {};
     $('app_title').value = cfg.app_title || 'Albé 2026';
     $('victory_hold').value = cfg.victory_hold_seconds;
     $('poll_dashboard').value = cfg.poll_dashboard_ms || 2000;
@@ -68,6 +73,7 @@
     var audio = cfg.audio || {};
     var pat = audio.patterns || {};
     $('audio_base').value = audio.base_url || 'audio/';
+    $('grid_cycles').value = audio.grid_cycles || 1;
     $('audio_samples').value = samplesToText(audio.samples);
     $('pat_da').value = pat.domination_a || '';
     $('pat_db').value = pat.domination_b || '';
@@ -97,6 +103,10 @@
       postes: postes,
       audio: {
         base_url: $('audio_base').value,
+        // Grille de synchro audio : grid_cycles est éditable ; grid_cps reste un
+        // réglage avancé (fichier seulement) → relayé tel quel. Le serveur borne.
+        grid_cps: loadedAudio.grid_cps,
+        grid_cycles: +$('grid_cycles').value || 1,
         samples: textToSamples($('audio_samples').value),
         patterns: {
           domination_a: $('pat_da').value,

@@ -59,9 +59,16 @@ cdp_head($config['app_title'] . ' — Configuration');
     <div class="section-head"><span style="color:var(--a);font-family:var(--font-display);font-weight:700">03</span><h2>Bande-son (Strudel)</h2>
       <span class="hint">samples du dossier /audio + patterns Strudel par état</span></div>
 
-    <div class="field">
-      <label for="audio_base">Dossier des samples (base_url)</label>
-      <input type="text" id="audio_base" value="audio/">
+    <div style="display:grid;grid-template-columns:2fr 1fr;gap:14px">
+      <div class="field">
+        <label for="audio_base">Dossier des samples (base_url)</label>
+        <input type="text" id="audio_base" value="audio/">
+      </div>
+      <div class="field">
+        <label for="grid_cycles">Synchro — maille (cycles)</label>
+        <input type="number" id="grid_cycles" min="1" max="64" step="1" value="1">
+        <span class="hint">Cale le départ des sons entre appareils sur une grille commune. 1 = ~2 s (temps forts alignés, démarrage rapide) ; augmenter aligne aussi les boucles longues mais retarde le départ d'autant.</span>
+      </div>
     </div>
 
     <div class="field">
