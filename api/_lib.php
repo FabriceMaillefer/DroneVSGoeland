@@ -90,6 +90,12 @@ function cdp_default_config(): array
             //  - grid_cycles : granularité d'alignement, en cycles (1 = ~2 s ici).
             'grid_cps'    => 0.5,
             'grid_cycles' => 1,
+            //  - sync_lead_ms : avance (ms) avant de caler un changement de piste
+            //    sur la grille, le temps que tous les clients aient pollé le nouvel
+            //    état → changement audible au même instant partout. null = auto
+            //    (≈ poll le plus lent + marge). 0 = quasi immédiat (chaque client
+            //    sur son prochain top, sans viser la simultanéité).
+            'sync_lead_ms' => null,
             'samples'  => [
                 'aircraft' => 'aircraft/aircraft.wav',
                 'seagull'  => 'seagull/seagull.mp3',
@@ -351,6 +357,11 @@ function cdp_sanitize_config(array $in): array
     }
     if (isset($in['audio']['grid_cycles']) && is_numeric($in['audio']['grid_cycles'])) {
         $out['audio']['grid_cycles'] = min(64, max(1, (int) $in['audio']['grid_cycles']));
+    }
+    if (is_array($in['audio'] ?? null) && array_key_exists('sync_lead_ms', $in['audio'])) {
+        $v = $in['audio']['sync_lead_ms'];
+        // Valeur numérique → bornée [0, 30000] ; sinon null (= auto, dérivé des polls).
+        $out['audio']['sync_lead_ms'] = is_numeric($v) ? min(30000, max(0, (int) $v)) : null;
     }
 
     // samples : map nom -> fichier (ou tableau de fichiers). Noms = identifiants sûrs.

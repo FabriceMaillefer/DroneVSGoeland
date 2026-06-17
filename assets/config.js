@@ -74,6 +74,7 @@
     var pat = audio.patterns || {};
     $('audio_base').value = audio.base_url || 'audio/';
     $('grid_cycles').value = audio.grid_cycles || 1;
+    $('sync_lead').value = (audio.sync_lead_ms == null) ? '' : audio.sync_lead_ms;
     $('audio_samples').value = samplesToText(audio.samples);
     $('pat_da').value = pat.domination_a || '';
     $('pat_db').value = pat.domination_b || '';
@@ -103,10 +104,12 @@
       postes: postes,
       audio: {
         base_url: $('audio_base').value,
-        // Grille de synchro audio : grid_cycles est éditable ; grid_cps reste un
-        // réglage avancé (fichier seulement) → relayé tel quel. Le serveur borne.
+        // Grille de synchro audio : grid_cycles et sync_lead_ms sont éditables ;
+        // grid_cps reste un réglage avancé (fichier seulement) → relayé tel quel.
+        // sync_lead vide = auto (null) ; sinon valeur en ms. Le serveur borne.
         grid_cps: loadedAudio.grid_cps,
         grid_cycles: +$('grid_cycles').value || 1,
+        sync_lead_ms: ($('sync_lead').value === '') ? null : (+$('sync_lead').value || 0),
         samples: textToSamples($('audio_samples').value),
         patterns: {
           domination_a: $('pat_da').value,

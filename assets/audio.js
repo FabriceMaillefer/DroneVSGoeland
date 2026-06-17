@@ -57,9 +57,12 @@
 
     // Avance (s) ajoutée à sound_changed_at avant de caler le changement sur la
     // grille : il faut que TOUS les clients aient eu le temps de poller le nouvel
-    // état avant l'instant cible. On couvre donc le poll le plus lent + une marge
-    // réseau. (Le client qui agit le reçoit instantané, mais attend le même instant.)
-    var SYNC_LEAD_S = (Math.max(+CFG.poll_dashboard_ms || 2000, +CFG.poll_poste_ms || 3000) + 1200) / 1000;
+    // état avant l'instant cible. (Le client qui agit le reçoit instantané, mais
+    // attend le même instant.) Réglable via audio.sync_lead_ms ; null/absent =
+    // auto (poll le plus lent + marge) ; 0 = quasi immédiat (pas de simultanéité visée).
+    var SYNC_LEAD_S = (typeof AUDIO.sync_lead_ms === 'number')
+      ? Math.max(0, AUDIO.sync_lead_ms) / 1000
+      : (Math.max(+CFG.poll_dashboard_ms || 2000, +CFG.poll_poste_ms || 3000) + 1200) / 1000;
     // Sur une horloge déjà en marche, on (ré)évalue un peu AVANT la frontière cible
     // pour que Strudel fasse son swap « sur la mesure » exactement sur ce top. La
     // marge absorbe aussi l'erreur d'offset d'horloge entre clients (doit rester
