@@ -414,6 +414,30 @@ function cdp_save_config(array $config): void
 /* État                                                                */
 /* ------------------------------------------------------------------ */
 
+/**
+ * Clé d'état SONORE : la piste que les clients doivent jouer pour cet état.
+ * Doit rester en phase avec computeDesired() de assets/audio.js.
+ *  - partie terminée → victoire de l'équipe gagnante ;
+ *  - sinon → équipe du poste sonore (A/B), ou 'neutral'.
+ */
+function cdp_sound_key(array $state, array $config): string
+{
+    if (!empty($state['game_over']) && !empty($state['winner'])) {
+        return $state['winner'] === 'A' ? 'victory_a' : 'victory_b';
+    }
+    $soundId = (int) ($config['sound_poste_id'] ?? 3);
+    $team = 'neutral';
+    foreach ($state['postes'] as $p) {
+        if ((int) ($p['id'] ?? 0) === $soundId) {
+            $team = $p['team'] ?? 'neutral';
+            break;
+        }
+    }
+    if ($team === 'A') return 'domination_a';
+    if ($team === 'B') return 'domination_b';
+    return 'neutral';
+}
+
 /** État neuf, partie non démarrée, postes positionnés selon la config. */
 function cdp_default_state(array $config): array
 {
@@ -421,7 +445,7 @@ function cdp_default_state(array $config): array
     foreach ($config['postes'] as $p) {
         $postes[] = ['id' => (int) $p['id'], 'name' => (string) $p['name'], 'team' => (string) $p['initial']];
     }
-    return [
+    $state = [
         'version'          => 1,
         'game_started'     => false,
         'game_over'        => false,
@@ -432,7 +456,13 @@ function cdp_default_state(array $config): array
         'domination_team'  => null,
         'postes'           => $postes,
         'events'           => [],
+        // Synchro audio : clé sonore courante + epoch (serveur) de son dernier
+        // changement. Tous les clients calent l'instant du changement de bande-son
+        // sur sound_changed_at (voir assets/audio.js).
+        'sound_changed_at' => null,
     ];
+    $state['sound_key'] = cdp_sound_key($state, $config);
+    return $state;
 }
 
 /**
@@ -483,6 +513,15 @@ function cdp_mutate_state(array $config, callable $fn, array &$meta = []): array
     $changed = (bool) $fn($state, $config, $meta);
 
     if ($changed) {
+        // Synchro audio : si la piste sonore change réellement, on horodate l'instant
+        // (epoch serveur) pour que TOUS les clients déclenchent le changement au même
+        // moment (voir assets/audio.js). Les changements sans effet sonore (autre
+        // poste, etc.) ne re-déclenchent pas la bande-son.
+        $soundKey = cdp_sound_key($state, $config);
+        if ($soundKey !== ($state['sound_key'] ?? null)) {
+            $state['sound_key']        = $soundKey;
+            $state['sound_changed_at'] = time();
+        }
         // Incrément ATOMIQUE de version : on est sous verrou, donc personne d'autre n'écrit.
         $state['version'] = (int) ($state['version'] ?? 0) + 1;
         ftruncate($fp, 0);
